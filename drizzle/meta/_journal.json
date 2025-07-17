@@ -15,6 +15,13 @@
       "when": 1752777443197,
       "tag": "0001_soft_stryfe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1752834600001,
+      "tag": "0003_thankful_squadron_sinister",
+      "breakpoints": true
     }
   ]
 }

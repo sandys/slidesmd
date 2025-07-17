@@ -78,6 +78,14 @@ export function PresentationEditor({
     });
   };
 
+  const handlePrint = () => {
+    const key = window.location.hash;
+    // Open a dedicated print page, passing the key in the hash.
+    const printUrl = `/print/p/${presentation.publicId}/h${key}`;
+    console.log("Opening print URL:", printUrl);
+    window.open(printUrl, '_blank');
+  };
+
   return (
     <div className="p-4 space-y-4">
       <div className="flex justify-between items-center">
@@ -101,6 +109,7 @@ export function PresentationEditor({
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
         <Button variant="secondary" onClick={() => setShareDialogOpen(true)}>Share</Button>
+        <Button variant="outline" onClick={handlePrint}>Export to PDF</Button>
       </div>
       <ShareDialog
         isOpen={isShareDialogOpen}
