@@ -1,0 +1,1 @@
+ALTER TABLE `presentations` ADD `theme` text DEFAULT 'black.css' NOT NULL;

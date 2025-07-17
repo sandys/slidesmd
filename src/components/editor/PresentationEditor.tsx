@@ -6,6 +6,7 @@ import { getPresentation, updatePresentation } from "@/app/actions";
 import { SlideEditor } from "./SlideEditor";
 import { encrypt, importKey } from "@/lib/crypto";
 import { ShareDialog } from "./ShareDialog";
+import { ThemeSelector } from "./ThemeSelector";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 // This now represents a decrypted slide
@@ -25,23 +26,20 @@ export function PresentationEditor({
   presentation,
   editKeyFromUrl,
 }: PresentationEditorProps) {
-  console.log("[PresentationEditor] Received presentation:", presentation);
   const [slides, setSlides] = useState<Slide[]>(presentation.slides);
+  const [theme, setTheme] = useState(presentation.theme);
   const [isSaving, startSaveTransition] = useTransition();
   const [isShareDialogOpen, setShareDialogOpen] = useState(false);
 
   const hasEditAccess = !!editKeyFromUrl;
-  console.log("[PresentationEditor] Edit access:", hasEditAccess);
 
   const handleSlideChange = (index: number, content: string) => {
-    console.log(`[PresentationEditor] Slide #${index + 1} content changed:`, content);
     const newSlides = [...slides];
     newSlides[index].content = content;
     setSlides(newSlides);
   };
 
   const handleAddSlide = () => {
-    console.log("[PresentationEditor] Adding new slide...");
     const newSlides = [
       ...slides,
       {
@@ -52,61 +50,49 @@ export function PresentationEditor({
       },
     ];
     setSlides(newSlides);
-    console.log("[PresentationEditor] New slides state:", newSlides);
   };
 
   const handleSaveChanges = () => {
-    console.log("[PresentationEditor] Starting save process...");
     startSaveTransition(async () => {
       try {
         const keyString = window.location.hash.substring(1);
-        console.log("[PresentationEditor] Extracted key string for encryption:", keyString);
         if (!keyString || !editKeyFromUrl) {
-            const errorMsg = "Cannot save. Decryption key or edit key is missing.";
-            console.error(`[PresentationEditor] ${errorMsg}`);
-            alert(errorMsg);
+            alert("Cannot save. Decryption key or edit key is missing.");
             return;
         }
-        console.log("[PresentationEditor] Importing key for encryption...");
         const key = await importKey(keyString);
-        console.log("[PresentationEditor] Key imported successfully.");
 
-        console.log("[PresentationEditor] Encrypting slides for saving...");
         const encryptedSlides = await Promise.all(
-            slides.map(async (slide, index) => {
-                console.log(`[PresentationEditor] Encrypting slide #${index + 1}:`, slide.content);
-                const encryptedContent = await encrypt(slide.content, key);
-                console.log(`[PresentationEditor] Encrypted content for slide #${index + 1}:`, encryptedContent);
-                return {
-                    id: slide.id,
-                    order: slide.order,
-                    content: encryptedContent,
-                };
-            })
+            slides.map(async (slide) => ({
+                id: slide.id,
+                order: slide.order,
+                content: await encrypt(slide.content, key),
+            }))
         );
-        console.log("[PresentationEditor] All slides encrypted:", encryptedSlides);
 
-        console.log("[PresentationEditor] Calling updatePresentation action...");
-        await updatePresentation(presentation.publicId, editKeyFromUrl, encryptedSlides);
-        console.log("[PresentationEditor] updatePresentation action completed.");
+        await updatePresentation(presentation.publicId, editKeyFromUrl, encryptedSlides, theme);
         alert("Presentation saved!");
       } catch (error) {
-        const errorMsg = `Error saving: ${error instanceof Error ? error.message : "Unknown error"}`;
-        console.error(`[PresentationEditor] ${errorMsg}`, error);
-        alert(errorMsg);
+        alert(`Error saving: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
     });
   };
 
-  console.log("[PresentationEditor] Rendering with slides:", slides);
-
   return (
     <div className="p-4 space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Edit Presentation</h2>
+        <div className="w-48">
+            <ThemeSelector selectedTheme={theme} onThemeChange={setTheme} />
+        </div>
+      </div>
+
       {slides.map((slide, index) => (
         <SlideEditor
           key={slide.id}
           content={slide.content}
           onContentChange={(newContent) => handleSlideChange(index, newContent)}
+          theme={theme}
         />
       ))}
       <div className="flex space-x-2">

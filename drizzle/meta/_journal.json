@@ -8,6 +8,13 @@
       "when": 1752743041682,
       "tag": "0000_loose_gressill",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1752777443197,
+      "tag": "0001_soft_stryfe",
+      "breakpoints": true
     }
   ]
 }

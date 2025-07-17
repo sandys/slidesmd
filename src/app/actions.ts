@@ -62,7 +62,12 @@ type Slide = {
     order: number;
 };
 
-export async function updatePresentation(publicId: string, editKey: string, newSlides: Slide[]) {
+export async function updatePresentation(
+    publicId: string,
+    editKey: string,
+    newSlides: Slide[],
+    theme: string
+) {
     const presentation = await db.query.presentations.findFirst({
         where: eq(presentations.publicId, publicId),
     });
@@ -78,6 +83,12 @@ export async function updatePresentation(publicId: string, editKey: string, newS
     }
 
     await db.transaction(async (tx) => {
+        // Update the presentation theme
+        await tx
+            .update(presentations)
+            .set({ theme })
+            .where(eq(presentations.id, presentation.id));
+
         const slideIdsToKeep = newSlides.map((s) => s.id).filter(id => Number.isInteger(id) && id > 0) as number[];
         
         if (slideIdsToKeep.length > 0) {

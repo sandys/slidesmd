@@ -13,14 +13,12 @@ import { ThemeSelector } from "./ThemeSelector";
 interface SlideEditorProps {
   content: string;
   onContentChange: (newContent: string) => void;
+  theme: string;
 }
 
-export function SlideEditor({ content, onContentChange }: SlideEditorProps) {
-  const [theme, setTheme] = useState("black.css");
-
+export function SlideEditor({ content, onContentChange, theme }: SlideEditorProps) {
   return (
     <div className="border rounded-lg p-4 space-y-4">
-      <ThemeSelector selectedTheme={theme} onThemeChange={setTheme} />
       <ResizablePanelGroup
         direction="horizontal"
         className="w-full rounded-lg border"

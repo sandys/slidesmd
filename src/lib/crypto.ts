@@ -59,7 +59,6 @@ export async function encrypt(
   plaintext: string,
   key: CryptoKey
 ): Promise<string> {
-  console.log("[crypto] Encrypting plaintext:", plaintext);
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encoded = new TextEncoder().encode(plaintext);
 
@@ -76,9 +75,7 @@ export async function encrypt(
   combined.set(iv);
   combined.set(new Uint8Array(ciphertext), iv.length);
 
-  const result = btoa(String.fromCharCode(...combined));
-  console.log("[crypto] Encryption result:", result);
-  return result;
+  return btoa(String.fromCharCode(...combined));
 }
 
 /**
@@ -91,7 +88,6 @@ export async function decrypt(
   ciphertextB64: string,
   key: CryptoKey
 ): Promise<string> {
-  console.log("[crypto] Decrypting ciphertext:", ciphertextB64);
   try {
     const combined = Uint8Array.from(atob(ciphertextB64), (c) => c.charCodeAt(0));
     const iv = combined.slice(0, 12);
@@ -106,11 +102,9 @@ export async function decrypt(
       ciphertext
     );
 
-    const result = new TextDecoder().decode(decrypted);
-    console.log("[crypto] Decryption result:", result);
-    return result;
+    return new TextDecoder().decode(decrypted);
   } catch (error) {
-    console.error("[crypto] Decryption failed:", error);
+    console.error("Decryption failed:", error);
     throw new Error("Decryption failed. The key may be invalid or the data corrupted.");
   }
 }
