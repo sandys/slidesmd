@@ -11,23 +11,22 @@ interface RevealPreviewProps {
 }
 
 export function RevealPreview({ markdown }: RevealPreviewProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const deckRef = useRef<Reveal.Api | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Effect for one-time initialization
   useEffect(() => {
     if (deckRef.current || !containerRef.current) return;
 
     const deck = new Reveal(containerRef.current, {
       embedded: true,
       plugins: [Markdown],
-      // Pass the markdown content directly to the configuration
-      markdown: {
-        content: markdown,
-      },
     });
 
     deck.initialize().then(() => {
       deckRef.current = deck;
+      // Initial content load
+      updateSlides(deck, markdown);
     });
 
     return () => {
@@ -40,23 +39,31 @@ export function RevealPreview({ markdown }: RevealPreviewProps) {
         console.warn("Reveal.js destroy call failed.", e);
       }
     };
-  }, []); // Run only once on mount
+  }, []); // Empty dependency array ensures this runs only once
 
-  // Update the slides when markdown changes
+  // Effect for updating slides when markdown changes
   useEffect(() => {
     if (deckRef.current) {
-      // This is a more robust way to update the content
-      // It re-parses the markdown and updates the slides.
-      deckRef.current.getPlugin("markdown").marked(markdown).then((slides: string) => {
-        const slidesContainer = deckRef.current?.getSlidesElement();
-        if (slidesContainer) {
-            slidesContainer.innerHTML = slides;
-            deckRef.current?.sync();
-            deckRef.current?.slide(0, 0); // Reset to the first slide
-        }
-      });
+      updateSlides(deckRef.current, markdown);
     }
   }, [markdown]);
+
+  const updateSlides = (deck: Reveal.Api, newMarkdown: string) => {
+    // This is the correct API to update the slides
+    const slidesContainer = deck.getSlidesElement();
+    if (slidesContainer) {
+      slidesContainer.innerHTML = `
+        <section data-markdown>
+          <textarea data-template>
+            ${newMarkdown}
+          </textarea>
+        </section>
+      `;
+      // After setting the content, we need to tell Reveal.js to re-sync
+      deck.sync();
+      deck.slide(0, 0); // Optional: reset to the first slide on update
+    }
+  };
 
   return (
     <div className="reveal h-full w-full" ref={containerRef}>
