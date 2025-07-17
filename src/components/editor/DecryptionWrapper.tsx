@@ -41,7 +41,6 @@ export function DecryptionWrapper({ presentation, editKeyFromUrl }: DecryptionWr
         );
         setDecryptedSlides(slides);
       } catch (e) {
-        console.error(e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred during decryption.";
         setError(`Failed to decrypt presentation. The key may be invalid or the data corrupted. Details: ${errorMessage}`);
       }

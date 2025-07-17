@@ -78,9 +78,9 @@ describe("Server Actions", () => {
   });
 
   describe("getPresentation", () => {
-    it("should return a presentation with slides", async () => {
+    it("should return a presentation with slides and theme", async () => {
       const mockPublicId = "test-id";
-      const mockPresentation = { id: 1, publicId: mockPublicId, slides: [] };
+      const mockPresentation = { id: 1, publicId: mockPublicId, slides: [], theme: "light" };
       vi.mocked(db.query.presentations.findFirst).mockResolvedValue(mockPresentation);
 
       const result = await getPresentation(mockPublicId);
@@ -120,7 +120,7 @@ describe("Server Actions", () => {
   describe("updatePresentation", () => {
     const mockPublicId = "test-id";
     const mockEditKey = "test-edit-key";
-    const mockPresentation = { id: 1, publicId: mockPublicId, hashedEditKey: "hashed-key" };
+    const mockPresentation = { id: 1, publicId: mockPublicId, hashedEditKey: "hashed-key", theme: "light" };
 
     const mockTx = {
       delete: vi.fn().mockReturnThis(),
@@ -129,6 +129,7 @@ describe("Server Actions", () => {
       values: vi.fn().mockReturnThis(),
       update: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
+      run: vi.fn(),
     };
 
     beforeEach(() => {
@@ -137,11 +138,67 @@ describe("Server Actions", () => {
       vi.mocked(db.transaction).mockImplementation(async (callback) => callback(mockTx as any));
     });
 
-    it("should update an existing slide with content", async () => {
+    it("should throw an error if the presentation is not found", async () => {
+      vi.mocked(db.query.presentations.findFirst).mockResolvedValue(undefined);
       const newSlides = [{ id: 1, content: "new-data", order: 1 }];
-      await updatePresentation(mockPublicId, mockEditKey, newSlides as any);
+      await expect(updatePresentation(mockPublicId, mockEditKey, newSlides as any, "dark")).rejects.toThrow("Presentation not found");
+    });
+
+    it("should throw an error for an invalid edit key", async () => {
+      vi.mocked(bcrypt.compare).mockResolvedValue(false);
+      const newSlides = [{ id: 1, content: "new-data", order: 1 }];
+      await expect(updatePresentation(mockPublicId, mockEditKey, newSlides as any, "dark")).rejects.toThrow("Invalid edit key");
+    });
+
+    it("should update the presentation theme", async () => {
+      const newSlides = [{ id: 1, content: "new-data", order: 1 }];
+      await updatePresentation(mockPublicId, mockEditKey, newSlides as any, "dark");
+      expect(mockTx.update).toHaveBeenCalledWith(presentations);
+      expect(mockTx.set).toHaveBeenCalledWith({ theme: "dark" });
+      expect(mockTx.where).toHaveBeenCalledWith(expect.anything());
+    });
+
+    it("should update an existing slide", async () => {
+      const newSlides = [{ id: 1, content: "new-data", order: 1 }];
+      await updatePresentation(mockPublicId, mockEditKey, newSlides as any, "light");
       expect(mockTx.update).toHaveBeenCalledWith(slides);
       expect(mockTx.set).toHaveBeenCalledWith({ content: "new-data", order: 1 });
+      expect(mockTx.where).toHaveBeenCalledWith(expect.anything());
+    });
+
+    it("should add a new slide", async () => {
+      const newSlides = [{ content: "new-slide-data", order: 1 }];
+      await updatePresentation(mockPublicId, mockEditKey, newSlides as any, "light");
+      expect(mockTx.insert).toHaveBeenCalledWith(slides);
+      expect(mockTx.values).toHaveBeenCalledWith({
+        presentationId: mockPresentation.id,
+        content: "new-slide-data",
+        order: 1,
+      });
+    });
+
+    it("should delete a slide", async () => {
+      const newSlides = [{ id: 1, content: "data", order: 1 }];
+      // Simulate that the DB has slides with id 1 and 2
+      await updatePresentation(mockPublicId, mockEditKey, newSlides as any, "light");
+      expect(mockTx.delete).toHaveBeenCalledWith(slides);
+      expect(mockTx.where).toHaveBeenCalledWith(expect.anything());
+    });
+
+    it("should reorder slides", async () => {
+        const newSlides = [
+            { id: 1, content: "slide 1", order: 2 },
+            { id: 2, content: "slide 2", order: 1 },
+        ];
+        await updatePresentation(mockPublicId, mockEditKey, newSlides as any, "light");
+        
+        // Check first update call
+        expect(mockTx.update).toHaveBeenCalledWith(slides);
+        expect(mockTx.set).toHaveBeenCalledWith({ content: "slide 1", order: 2 });
+        
+        // Check second update call
+        expect(mockTx.update).toHaveBeenCalledWith(slides);
+        expect(mockTx.set).toHaveBeenCalledWith({ content: "slide 2", order: 1 });
     });
   });
 });

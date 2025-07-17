@@ -39,7 +39,7 @@ describe("DecryptionWrapper", () => {
     // Wait for the error message to appear
     await waitFor(() => {
       const errorElement = screen.getByText(
-        "Failed to decrypt presentation. The key may be invalid or the data corrupted."
+        /Failed to decrypt presentation\. The key may be invalid or the data corrupted\./
       );
       expect(errorElement).toBeInTheDocument();
     });
