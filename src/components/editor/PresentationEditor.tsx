@@ -2,15 +2,22 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { getPresentation, updatePresentation, verifyEditKey } from "@/app/actions";
+import { getPresentation, updatePresentation } from "@/app/actions";
 import { SlideEditor } from "./SlideEditor";
+import { encrypt, importKey } from "@/lib/crypto";
+import { ShareDialog } from "./ShareDialog";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
-type Slide = Presentation["slides"][number];
+// This now represents a decrypted slide
+type Slide = {
+    id?: number;
+    content: string;
+    order: number;
+    presentationId: number;
+};
 
 interface PresentationEditorProps {
-  presentation: Presentation;
+  presentation: Omit<Presentation, 'slides'> & { slides: Slide[] };
   editKeyFromUrl?: string;
 }
 
@@ -19,10 +26,10 @@ export function PresentationEditor({
   editKeyFromUrl,
 }: PresentationEditorProps) {
   const [slides, setSlides] = useState<Slide[]>(presentation.slides);
-  const [editKey, setEditKey] = useState(editKeyFromUrl || "");
-  const [hasEditAccess, setHasEditAccess] = useState(!!editKeyFromUrl);
   const [isSaving, startSaveTransition] = useTransition();
-  const [isVerifying, startVerifyTransition] = useTransition();
+  const [isShareDialogOpen, setShareDialogOpen] = useState(false);
+
+  const hasEditAccess = !!editKeyFromUrl;
 
   const handleSlideChange = (index: number, content: string) => {
     const newSlides = [...slides];
@@ -46,43 +53,28 @@ export function PresentationEditor({
   const handleSaveChanges = () => {
     startSaveTransition(async () => {
       try {
-        await updatePresentation(presentation.publicId, editKey, slides);
+        const keyString = window.location.hash.substring(1);
+        if (!keyString || !editKeyFromUrl) {
+            alert("Cannot save. Decryption key or edit key is missing.");
+            return;
+        }
+        const key = await importKey(keyString);
+
+        const encryptedSlides = await Promise.all(
+            slides.map(async (slide) => ({
+                id: slide.id,
+                order: slide.order,
+                encryptedContent: await encrypt(slide.content, key),
+            }))
+        );
+
+        await updatePresentation(presentation.publicId, editKeyFromUrl, encryptedSlides);
         alert("Presentation saved!");
       } catch (error) {
         alert(`Error saving: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
     });
   };
-
-  const handleVerifyKey = () => {
-    startVerifyTransition(async () => {
-      const isValid = await verifyEditKey(presentation.publicId, editKey);
-      if (isValid) {
-        setHasEditAccess(true);
-      } else {
-        alert("Invalid edit key!");
-      }
-    });
-  };
-
-  if (!hasEditAccess) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-24">
-        <div className="w-full max-w-sm space-y-4">
-          <h1 className="text-2xl font-bold">Enter Edit Key</h1>
-          <Input
-            type="password"
-            value={editKey}
-            onChange={(e) => setEditKey(e.target.value)}
-            placeholder="Your edit key"
-          />
-          <Button onClick={handleVerifyKey} disabled={isVerifying}>
-            {isVerifying ? "Verifying..." : "Edit Presentation"}
-          </Button>
-        </div>
-      </main>
-    );
-  }
 
   return (
     <div className="p-4 space-y-4">
@@ -94,11 +86,18 @@ export function PresentationEditor({
         />
       ))}
       <div className="flex space-x-2">
-        <Button onClick={handleAddSlide}>Add New Slide</Button>
-        <Button onClick={handleSaveChanges} disabled={isSaving}>
+        <Button onClick={handleAddSlide} disabled={!hasEditAccess}>Add New Slide</Button>
+        <Button onClick={handleSaveChanges} disabled={isSaving || !hasEditAccess}>
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>
+        <Button variant="secondary" onClick={() => setShareDialogOpen(true)}>Share</Button>
       </div>
+      <ShareDialog
+        isOpen={isShareDialogOpen}
+        onClose={() => setShareDialogOpen(false)}
+        publicId={presentation.publicId}
+        editKey={editKeyFromUrl}
+      />
     </div>
   );
 }

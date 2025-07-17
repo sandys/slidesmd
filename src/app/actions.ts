@@ -7,7 +7,7 @@ import bcrypt from "bcrypt";
 import { redirect } from "next/navigation";
 import { and, eq, inArray } from "drizzle-orm";
 
-export async function createPresentation() {
+export async function createPresentation(initialEncryptedContent: string) {
   const publicId = nanoid(8);
   const editKey = nanoid(12);
   const hashedEditKey = await bcrypt.hash(editKey, 10);
@@ -34,13 +34,13 @@ export async function createPresentation() {
       .insert(slides)
       .values({
         presentationId: presentationIdAsNumber,
-        content: "# Welcome to your presentation!",
+        encryptedContent: initialEncryptedContent,
         order: 1,
       })
       .run();
   });
 
-  redirect(`/p/${publicId}?editKey=${editKey}`);
+  return { publicId, editKey };
 }
 
 export async function getPresentation(publicId: string) {
@@ -58,7 +58,7 @@ export async function getPresentation(publicId: string) {
 
 type Slide = {
     id?: number;
-    content: string;
+    encryptedContent: string;
     order: number;
 };
 
@@ -96,12 +96,12 @@ export async function updatePresentation(publicId: string, editKey: string, newS
             if (slide.id) {
                 await tx
                     .update(slides)
-                    .set({ content: slide.content, order: slide.order })
+                    .set({ encryptedContent: slide.encryptedContent, order: slide.order })
                     .where(eq(slides.id, slide.id));
             } else {
                 await tx.insert(slides).values({
                     presentationId: presentation.id,
-                    content: slide.content,
+                    encryptedContent: slide.encryptedContent,
                     order: slide.order,
                 });
             }
