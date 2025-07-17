@@ -3,15 +3,18 @@ import { PresentationEditor } from "@/components/editor/PresentationEditor";
 import { notFound } from "next/navigation";
 
 interface PresentationPageProps {
-  params: { id: string };
-  searchParams: { editKey?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ editKey?: string }>;
 }
 
 export default async function PresentationPage({
   params,
   searchParams,
 }: PresentationPageProps) {
-  const presentation = await getPresentation(params.id);
+  const { id } = await params;
+  const { editKey } = await searchParams;
+
+  const presentation = await getPresentation(id);
 
   if (!presentation) {
     notFound();
@@ -20,7 +23,7 @@ export default async function PresentationPage({
   return (
     <PresentationEditor
       presentation={presentation}
-      editKeyFromUrl={searchParams.editKey}
+      editKeyFromUrl={editKey}
     />
   );
 }

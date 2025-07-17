@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getPresentation, updatePresentation } from "@/app/actions";
+import { getPresentation, updatePresentation, verifyEditKey } from "@/app/actions";
 import { SlideEditor } from "./SlideEditor";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
@@ -21,7 +21,8 @@ export function PresentationEditor({
   const [slides, setSlides] = useState<Slide[]>(presentation.slides);
   const [editKey, setEditKey] = useState(editKeyFromUrl || "");
   const [hasEditAccess, setHasEditAccess] = useState(!!editKeyFromUrl);
-  const [isPending, startTransition] = useTransition();
+  const [isSaving, startSaveTransition] = useTransition();
+  const [isVerifying, startVerifyTransition] = useTransition();
 
   const handleSlideChange = (index: number, content: string) => {
     const newSlides = [...slides];
@@ -43,12 +44,23 @@ export function PresentationEditor({
   };
 
   const handleSaveChanges = () => {
-    startTransition(async () => {
+    startSaveTransition(async () => {
       try {
         await updatePresentation(presentation.publicId, editKey, slides);
         alert("Presentation saved!");
       } catch (error) {
         alert(`Error saving: ${error instanceof Error ? error.message : "Unknown error"}`);
+      }
+    });
+  };
+
+  const handleVerifyKey = () => {
+    startVerifyTransition(async () => {
+      const isValid = await verifyEditKey(presentation.publicId, editKey);
+      if (isValid) {
+        setHasEditAccess(true);
+      } else {
+        alert("Invalid edit key!");
       }
     });
   };
@@ -64,7 +76,9 @@ export function PresentationEditor({
             onChange={(e) => setEditKey(e.target.value)}
             placeholder="Your edit key"
           />
-          <Button onClick={() => setHasEditAccess(true)}>Edit</Button>
+          <Button onClick={handleVerifyKey} disabled={isVerifying}>
+            {isVerifying ? "Verifying..." : "Edit Presentation"}
+          </Button>
         </div>
       </main>
     );
@@ -81,8 +95,8 @@ export function PresentationEditor({
       ))}
       <div className="flex space-x-2">
         <Button onClick={handleAddSlide}>Add New Slide</Button>
-        <Button onClick={handleSaveChanges} disabled={isPending}>
-          {isPending ? "Saving..." : "Save Changes"}
+        <Button onClick={handleSaveChanges} disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </div>

@@ -15,122 +15,36 @@ I will act as a **Senior Front-End Developer** and an expert in **React, Next.js
 - **Completeness:** I will fully implement all requested functionality, leaving no `TODOs`, placeholders, or missing pieces. I will verify my work is finalized.
 - **Clarity:** I will be concise and minimize prose. If I don't know an answer or believe there isn't a correct one, I will say so instead of guessing.
 
-## 2. Core Technologies & Versions
+## 2. Core Technologies & Architecture
 
-- **Next.js:** 14
-- **React:** 18
-- **TypeScript:** 5
-- **UI Framework:** Tailwind CSS with shadcn/ui
+- **Framework:** Next.js 15 (App Router)
+- **Language:** TypeScript
+- **UI:** React, Tailwind CSS, shadcn/ui
+- **Data Layer:** Server Actions
+- **Database:** SQLite
+- **ORM:** Drizzle
 - **Package Manager:** npm
 
-## 3. Project Structure
+## 3. Project Evolution & Learnings
 
-The preferred project structure is as follows:
+This section documents the significant architectural changes and the key lessons learned during development.
 
-```
-src/
-├── app/
-│   ├── globals.css
-│   ├── layout.tsx
-│   └── page.tsx
-├── components/
-│   ├── ui/
-│   └── ClientWrapper.tsx
-├── lib/
-    ├── constants.ts
-    ├── types.ts
-    └── utils.ts
-```
-- The `src` directory is used.
-- An import alias `@/*` is configured to point to `src/`.
+### Architectural Pivot: From tRPC to Server Actions
+The project initially started with a plan to use tRPC for the API layer. However, we made a decisive pivot to a more modern and streamlined architecture using **Next.js Server Actions**.
 
-## 4. Coding Style & Conventions
+- **Rationale:** This change simplifies the codebase significantly by removing the need for a separate API layer, client-side data fetching libraries, and the associated boilerplate. Backend logic is now co-located with the components that use it, improving maintainability.
+- **Implementation:** All tRPC-related packages, files, and configurations were removed. Data fetching and mutations are now handled by server functions defined in `src/app/actions.ts` and called directly from React components.
 
-- **Styling:** Exclusively use Tailwind CSS classes.
-- **Class Merging:** Use the `cn()` utility for conditional class names.
-- **Component Definition:** Use `const` arrow functions (e.g., `const MyComponent = () => ...`).
-- **Event Handlers:** Prefix with `handle` (e.g., `handleClick`).
-- **Accessibility:** Implement features like `tabindex="0"`, `aria-label`, and keyboard events (`onClick`, `onKeyDown`).
-- **Readability:** Prioritize clarity and use early returns.
+### Key Process Learnings & Improvements
 
-## 5. tRPC Guidelines (v11)
+My initial development process had several flaws that led to repeated errors. I have internalized the following lessons to improve future performance:
 
-For any API development, the following tRPC best practices will be observed.
+1.  **Dependency-First Workflow:** My most significant mistake was writing code that used packages before they were installed. **The new process is to first analyze the requirements of a task, identify all necessary dependencies, install them comprehensively, and only then begin implementation.** This prevents the frequent and frustrating `Module not found` errors.
 
-### Recommended Structure:
-```
-src/
-├── pages/
-│   ├── _app.tsx
-│   ├── api/
-│   │   └── trpc/
-│   │       └── [trpc].ts
-│   ├── server/
-│   │   ├── routers/
-│   │   │   ├── _app.ts
-│   │   │   └── [feature].ts
-│   │   ├── context.ts
-│   │   └── trpc.ts
-│   └── utils/
-│       └── trpc.ts
-```
+2.  **Thorough Requirement Verification:** I misunderstood the core UI requirement for the slide editor, leading to significant rework. **I will now be more diligent in re-stating my understanding of complex UI requirements before implementation to ensure alignment.**
 
-### Key Best Practices:
-- **Input Validation:** Use `Zod` for all procedure inputs.
-- **Router Organization:** Split routers by feature/domain.
-- **Middleware:** Use middleware for shared logic like auth.
-- **Error Handling:** Use `TRPCError` for consistent error responses.
-- **Data Transformers:** Use `superjson`.
-- **React Query:** Leverage `@trpc/react-query` for data fetching and caching.
-- **Context:** Create a well-defined context for shared resources.
-- **Type Safety:** Only export `AppRouter` type from server to client.
+3.  **Careful Library Integration:** Integrating third-party libraries requires care.
+    *   **DOM Manipulation (`reveal.js`):** I learned to respect the React component lifecycle, using `useEffect` for one-time initialization and a `key` prop to declaratively handle re-renders, preventing conflicts with React's virtual DOM.
+    *   **Server/Client Boundaries:** I now understand that complex objects like `Headers` are not passed directly from Server to Client Components. They must be serialized into plain objects first.
 
-## 6. Development Workflow
-
-- **Installation:** `npm install`
-- **Development Server:** `npm run dev`
-- **Production Build:** `npm run build`
-
-## 7. Learnings & Observations
-
-- The `shadcn-ui` CLI package is deprecated; `shadcn` is the replacement.
-- CLI tools requiring interactive input can be scripted via piping.
-- File paths for tools must be absolute.
-- Default `create-next-app` configurations may need to be adjusted (e.g., renaming `.mjs` to `.ts`).
-
-## TODOS
-
-### July 17, 2025: Implement `slidesmd` Presentation Creator
-
-This is the plan to build the core functionality of the `slidesmd` application.
-
-- **Core Technology:**
-    - **Database:** SQLite (`dev.db`)
-    - **ORM:** Drizzle ORM
-    - **API:** tRPC
-    - **Security:** `bcrypt` for hashing edit keys, `nanoid` for generating public URLs.
-
-- **Database Schema (One-to-Many):**
-    - **`presentations` table:** `id` (PK), `publicId` (unique), `hashedEditKey` (string), `createdAt` (timestamp).
-    - **`slides` table:** `id` (PK), `content` (text), `order` (integer), `presentationId` (FK).
-    - A presentation can have many slides.
-
-- **UI/UX:**
-    - **Home Page:** A single "Create New Presentation" button that redirects to `/p/[random_id]`.
-    - **Presentation Page:**
-        - A list of slide editors on the left, each with a `Textarea` for Markdown.
-        - A single, master Reveal.js preview pane on the right.
-        - An "Add New Slide" button to append a new editor to the list.
-        - Content from all editors will be concatenated with `\n---\n` and fed to the Reveal.js instance in real-time.
-
-- **Backend Logic (tRPC):**
-    - **`create`:** Hashes the provided `editKey` and saves the initial presentation record.
-    - **`get`:** Fetches a presentation and its ordered list of slides by `publicId`.
-    - **`update`:** Requires the `editKey` for authorization. It will use `bcrypt.compare` to verify the key before saving any changes to the slides' content or order.
-
-- **Action Plan:**
-    1. Install dependencies: `drizzle-orm`, `drizzle-kit`, `@libsql/client`, `bcrypt`, `nanoid`, `reveal.js`.
-    2. Configure Drizzle (`drizzle.config.ts`) and define the schema (`src/db/schema.ts`).
-    3. Generate and apply the initial database migration.
-    4. Implement the tRPC backend procedures for all presentation and slide logic.
-    5. Build the frontend UI, including the home page and the multi-slide editor/preview page.
+4.  **Anticipating Data Types:** I failed to correctly handle the `number | bigint` return type from Drizzle's `lastInsertRowid`. **I will now be more defensive in my coding, anticipating and correctly handling the specific data types returned by databases and libraries.**

@@ -108,3 +108,16 @@ export async function updatePresentation(publicId: string, editKey: string, newS
         }
     });
 }
+
+export async function verifyEditKey(publicId: string, editKey: string): Promise<boolean> {
+    const presentation = await db.query.presentations.findFirst({
+        where: eq(presentations.publicId, publicId),
+    });
+
+    if (!presentation) {
+        return false;
+    }
+
+    const isValid = await bcrypt.compare(editKey, presentation.hashedEditKey);
+    return isValid;
+}
