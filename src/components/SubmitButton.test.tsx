@@ -1,8 +1,9 @@
 // src/components/SubmitButton.test.tsx
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { SubmitButton } from "./SubmitButton";
 import * as ReactDOM from "react-dom";
+import type { FormStatus } from "react-dom";
 
 // A simple wrapper to simulate being inside a <form>
 const FormWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -27,7 +28,7 @@ describe("SubmitButton", () => {
   });
 
   it("should render the default state when not pending", () => {
-    useFormStatusMock.mockReturnValue({ pending: false } as any);
+    useFormStatusMock.mockReturnValue({ pending: false } as FormStatus);
 
     render(
       <FormWrapper>
@@ -40,7 +41,7 @@ describe("SubmitButton", () => {
   });
 
   it("should render the pending state", () => {
-    useFormStatusMock.mockReturnValue({ pending: true } as any);
+    useFormStatusMock.mockReturnValue({ pending: true } as FormStatus);
 
     render(
       <FormWrapper>

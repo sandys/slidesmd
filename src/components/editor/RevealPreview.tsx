@@ -45,7 +45,7 @@ export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
       enableFocus: false,
     });
 
-    deck.initialize().then(() => {
+    void deck.initialize().then(() => {
       deckRef.current = deck;
       updateSlides(deck, markdown);
     });
@@ -53,14 +53,14 @@ export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
     return () => {
       try {
         if (deckRef.current) {
-          deckRef.current.destroy();
+          (deckRef.current as Reveal.Api).destroy();
           deckRef.current = null;
         }
       } catch (e) {
         console.warn("Reveal.js destroy call failed.", e);
       }
     };
-  }, []); // Runs only once
+  }, [markdown]); // Runs only once
 
   // Effect for updating slides when markdown changes
   useEffect(() => {
@@ -80,7 +80,7 @@ export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
         </section>
       `;
       deck.sync();
-      deck.slide(0, 0);
+      void deck.slide(0, 0);
     }
   };
 

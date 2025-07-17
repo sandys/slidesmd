@@ -4,7 +4,6 @@ import { db } from "@/db";
 import { presentations, slides } from "@/db/schema";
 import { nanoid } from "nanoid";
 import bcrypt from "bcrypt";
-import { redirect } from "next/navigation";
 import { and, eq, inArray, not } from "drizzle-orm";
 
 export async function createPresentation(initialEncryptedContent: string) {

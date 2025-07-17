@@ -2,7 +2,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ThemeSelector } from "./ThemeSelector";
-import { themes } from "@/lib/themes";
 
 // Mock the themes module
 vi.mock("@/lib/themes", () => ({
@@ -29,7 +28,7 @@ describe("ThemeSelector", () => {
 
   it("should display the correct selected theme", () => {
     render(<ThemeSelector selectedTheme="league.css" onThemeChange={() => {}} />);
-    const select = screen.getByRole("combobox") as HTMLSelectElement;
-    expect(select.value).toBe("league.css");
+    const select = screen.getByRole("combobox");
+    expect(select).toHaveValue("league.css");
   });
 });

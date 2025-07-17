@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -8,7 +7,6 @@ import {
 } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
 import { RevealPreview } from "./RevealPreview";
-import { ThemeSelector } from "./ThemeSelector";
 
 interface SlideEditorProps {
   content: string;

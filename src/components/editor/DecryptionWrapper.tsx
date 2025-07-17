@@ -46,7 +46,9 @@ export function DecryptionWrapper({ presentation, editKeyFromUrl }: DecryptionWr
       }
     };
 
-    decryptSlides();
+    void (async () => {
+      await decryptSlides();
+    })();
   }, [presentation]);
 
   if (error) {

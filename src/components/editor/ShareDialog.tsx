@@ -30,7 +30,7 @@ export function ShareDialog({ isOpen, onClose, publicId, editKey }: ShareDialogP
   const editUrl = editKey ? `${baseUrl}/p/${publicId}/e/${editKey}/h#${decryptionKey}` : "";
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => alert("Link copied to clipboard!"));
+    void navigator.clipboard.writeText(text).then(() => alert("Link copied to clipboard!"));
   };
 
   return (
