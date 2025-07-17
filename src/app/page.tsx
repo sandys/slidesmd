@@ -1,57 +1,12 @@
+import { createPresentation } from "@/app/actions";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle>Create project</CardTitle>
-          <CardDescription>Deploy your new project in one-click.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form>
-            <div className="grid w-full items-center gap-4">
-              <div className="flex flex-col space-y-1.5">
-                <Select>
-                  <SelectTrigger id="framework">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    <SelectItem value="next">Next.js</SelectItem>
-                    <SelectItem value="sveltekit">SvelteKit</SelectItem>
-                    <SelectItem value="astro">Astro</SelectItem>
-                    <SelectItem value="nuxt">Nuxt.js</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch id="dark-mode" />
-                <label htmlFor="dark-mode">Dark Mode</label>
-              </div>
-            </div>
-          </form>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline">Cancel</Button>
-          <Button>Deploy</Button>
-        </CardFooter>
-      </Card>
+      <form action={createPresentation}>
+        <Button type="submit">Create New Presentation</Button>
+      </form>
     </main>
   );
 }

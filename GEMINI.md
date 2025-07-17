@@ -97,3 +97,40 @@ src/
 - CLI tools requiring interactive input can be scripted via piping.
 - File paths for tools must be absolute.
 - Default `create-next-app` configurations may need to be adjusted (e.g., renaming `.mjs` to `.ts`).
+
+## TODOS
+
+### July 17, 2025: Implement `slidesmd` Presentation Creator
+
+This is the plan to build the core functionality of the `slidesmd` application.
+
+- **Core Technology:**
+    - **Database:** SQLite (`dev.db`)
+    - **ORM:** Drizzle ORM
+    - **API:** tRPC
+    - **Security:** `bcrypt` for hashing edit keys, `nanoid` for generating public URLs.
+
+- **Database Schema (One-to-Many):**
+    - **`presentations` table:** `id` (PK), `publicId` (unique), `hashedEditKey` (string), `createdAt` (timestamp).
+    - **`slides` table:** `id` (PK), `content` (text), `order` (integer), `presentationId` (FK).
+    - A presentation can have many slides.
+
+- **UI/UX:**
+    - **Home Page:** A single "Create New Presentation" button that redirects to `/p/[random_id]`.
+    - **Presentation Page:**
+        - A list of slide editors on the left, each with a `Textarea` for Markdown.
+        - A single, master Reveal.js preview pane on the right.
+        - An "Add New Slide" button to append a new editor to the list.
+        - Content from all editors will be concatenated with `\n---\n` and fed to the Reveal.js instance in real-time.
+
+- **Backend Logic (tRPC):**
+    - **`create`:** Hashes the provided `editKey` and saves the initial presentation record.
+    - **`get`:** Fetches a presentation and its ordered list of slides by `publicId`.
+    - **`update`:** Requires the `editKey` for authorization. It will use `bcrypt.compare` to verify the key before saving any changes to the slides' content or order.
+
+- **Action Plan:**
+    1. Install dependencies: `drizzle-orm`, `drizzle-kit`, `@libsql/client`, `bcrypt`, `nanoid`, `reveal.js`.
+    2. Configure Drizzle (`drizzle.config.ts`) and define the schema (`src/db/schema.ts`).
+    3. Generate and apply the initial database migration.
+    4. Implement the tRPC backend procedures for all presentation and slide logic.
+    5. Build the frontend UI, including the home page and the multi-slide editor/preview page.
