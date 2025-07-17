@@ -78,9 +78,8 @@ export async function updatePresentation(publicId: string, editKey: string, newS
     }
 
     await db.transaction(async (tx) => {
-        const slideIdsToKeep = newSlides.map((s) => s.id).filter(s => typeof s === 'number' && !isNaN(s)) as number[];
+        const slideIdsToKeep = newSlides.map((s) => s.id).filter(id => Number.isInteger(id) && id > 0) as number[];
         
-        // Delete slides that are not in the 'keep' list
         if (slideIdsToKeep.length > 0) {
             await tx
                 .delete(slides)
@@ -91,13 +90,11 @@ export async function updatePresentation(publicId: string, editKey: string, newS
                     )
                 );
         } else {
-            // If there are no slides to keep, delete all for this presentation
             await tx.delete(slides).where(eq(slides.presentationId, presentation.id));
         }
 
-        // Update existing slides and insert new ones
         for (const slide of newSlides) {
-            const isExistingSlide = typeof slide.id === 'number' && !isNaN(slide.id);
+            const isExistingSlide = Number.isInteger(slide.id) && (slide.id as number) > 0;
 
             if (isExistingSlide) {
                 await tx
