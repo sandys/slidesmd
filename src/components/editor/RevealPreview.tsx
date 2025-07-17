@@ -21,6 +21,7 @@ export function RevealPreview({ markdown }: RevealPreviewProps) {
     const deck = new Reveal(containerRef.current, {
       embedded: true,
       plugins: [Markdown],
+      enableFocus: false,
     });
 
     deck.initialize().then(() => {
@@ -54,7 +55,7 @@ export function RevealPreview({ markdown }: RevealPreviewProps) {
     if (slidesContainer) {
       slidesContainer.innerHTML = `
         <section data-markdown>
-          <textarea data-template>
+          <textarea data-template readonly>
             ${newMarkdown}
           </textarea>
         </section>
