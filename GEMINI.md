@@ -37,14 +37,47 @@ The project initially started with a plan to use tRPC for the API layer. However
 
 ### Key Process Learnings & Improvements
 
-My initial development process had several flaws that led to repeated errors. I have internalized the following lessons to improve future performance:
+My development process has had several flaws that led to repeated errors and incorrect solutions. I have internalized the following lessons to improve future performance:
 
-1.  **Dependency-First Workflow:** My most significant mistake was writing code that used packages before they were installed. **The new process is to first analyze the requirements of a task, identify all necessary dependencies, install them comprehensively, and only then begin implementation.** This prevents the frequent and frustrating `Module not found` errors.
+1.  **Build-Tool-First Approach:** My biggest mistake was attempting to solve problems with surface-level application code (e.g., API routes, file-system scripts) when the correct solution lay in the build system. I repeatedly failed to correctly configure Webpack and Turbopack.
+    *   **The New Process:** For tasks involving assets, dependencies, or environment-specific data, I will **always** consider a build-tool solution (e.g., a loader) first. I will not write a single line of application code for this until I have proven that the build tool is correctly providing the necessary data.
+    *   **Lesson:** A silent failure (like an empty dropdown) almost always points to a misconfigured loader or plugin that is failing gracefully. My first step must be to make the build-tool error **loud and explicit** to diagnose the root cause, rather than debugging the application code that consumes the (missing) data.
 
-2.  **Thorough Requirement Verification:** I misunderstood the core UI requirement for the slide editor, leading to significant rework. **I will now be more diligent in re-stating my understanding of complex UI requirements before implementation to ensure alignment.**
+2.  **Mastering Next.js Configuration:** I demonstrated a critical lack of knowledge regarding `next.config.ts`, causing multiple errors.
+    *   **`rewrites` vs. API Routes:** I now understand that `rewrites` are for URL-to-URL mapping, not for serving files from `node_modules`. The correct pattern for serving node module assets is a dedicated API route that reads the file.
+    *   **Turbopack vs. Webpack:** I now know that Turbopack and Webpack have distinct loader configurations in `next.config.ts`. I must provide correct rules for both if the project uses Turbopack for development. Turbopack rules require globs (`**/path/to/file.ts`) whereas Webpack can use absolute paths.
+    *   **Staying Current:** I failed to recognize that `params` in Next.js 15 API routes are now promises that must be `await`ed. I will be more vigilant about checking the documentation for the specific framework version in use.
 
-3.  **Careful Library Integration:** Integrating third-party libraries requires care.
-    *   **DOM Manipulation (`reveal.js`):** I learned to respect the React component lifecycle, using `useEffect` for one-time initialization and a `key` prop to declaratively handle re-renders, preventing conflicts with React's virtual DOM.
-    *   **Server/Client Boundaries:** I now understand that complex objects like `Headers` are not passed directly from Server to Client Components. They must be serialized into plain objects first.
+3.  **Trusting User Guidance:** I initially dismissed your suggestion to use the `readonly` attribute, which was the correct and simplest solution. I will give user-provided technical suggestions higher priority in my solution planning.
 
-4.  **Anticipating Data Types:** I failed to correctly handle the `number | bigint` return type from Drizzle's `lastInsertRowid`. **I will now be more defensive in my coding, anticipating and correctly handling the specific data types returned by databases and libraries.**
+## 4. Future Features / TODO
+
+This section outlines planned features that have been discussed and are pending implementation.
+
+### Client-Side Presentation Encryption
+
+**Goal:** Implement end-to-end encryption for presentations, ensuring the server has zero knowledge of the plaintext content.
+
+**Core Components:**
+1.  **Cryptography Library (`src/lib/crypto.ts`):**
+    *   A client-side-only module using the Web Crypto API (AES-256-GCM).
+    *   Will provide `encrypt` and `decrypt` functions.
+    *   The key will be a URL-safe Base64 string.
+
+2.  **URL Structure:**
+    *   **View URL:** `.../p/<presentation-id>/h#<decryption-key>`
+    *   **Edit URL:** `.../p/<presentation-id>/e/<edit-key>/h#<decryption-key>`
+    *   The decryption key will *only* exist in the URL fragment (`#`) to prevent it from being sent to the server.
+
+3.  **Middleware Validation (`src/middleware.ts`):**
+    *   A new middleware will validate that the `/h` segment is always at the end of the URL path, blocking any malformed requests with a 400 error.
+
+4.  **Database & Server Actions:**
+    *   The `slides.content` column will be renamed to `slides.encryptedContent`.
+    *   Server actions will be updated to only ever receive and store this encrypted content.
+
+5.  **UI/UX for Link Management:**
+    *   After creating/saving, a **Share Modal** will appear.
+    *   This modal will provide two distinct, clearly labeled links: the private "Edit URL" and the shareable "View URL".
+    *   A persistent "Share" button will be added to the editor UI to access this modal at any time.
+    *   The old "Enter Edit Key" flow will be removed entirely, as access is now managed by having the correct URL.
