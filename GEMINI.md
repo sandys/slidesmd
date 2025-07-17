@@ -25,30 +25,19 @@ I will act as a **Senior Front-End Developer** and an expert in **React, Next.js
 - **ORM:** Drizzle
 - **Package Manager:** npm
 
-## 3. Project Evolution & Learnings
+## 3. Key Process Learnings & Improvements
 
-This section documents the significant architectural changes and the key lessons learned during development.
+My development process has had several flaws that led to repeated errors. I will adhere to the following principles to ensure a higher standard of quality and efficiency.
 
-### Architectural Pivot: From tRPC to Server Actions
-The project initially started with a plan to use tRPC for the API layer. However, we made a decisive pivot to a more modern and streamlined architecture using **Next.js Server Actions**.
+1.  **Holistic User Journey First:** Before writing any code for a new feature, I must consider and outline the complete user experience from start to finish. This includes how the user discovers the feature, interacts with it, and what the final output is. I will not design back-end logic without a corresponding front-end interaction plan.
 
-- **Rationale:** This change simplifies the codebase significantly by removing the need for a separate API layer, client-side data fetching libraries, and the associated boilerplate. Backend logic is now co-located with the components that use it, improving maintainability.
-- **Implementation:** All tRPC-related packages, files, and configurations were removed. Data fetching and mutations are now handled by server functions defined in `src/app/actions.ts` and called directly from React components.
+2.  **Verify, Then Propose:** Before proposing changes to critical configuration files (e.g., `next.config.ts`, `package.json`, build scripts), I will state the version of the tool I am targeting. I will not propose complex configurations from memory and will prioritize solutions grounded in official documentation.
 
-### Key Process Learnings & Improvements
+3.  **Structured Debugging:** When faced with a silent failure (e.g., missing data, an empty UI element), my first step will be to add logging at each step of the data's lifecycle (source, transformation, destination) to pinpoint the exact point of failure before attempting a speculative fix.
 
-My development process has had several flaws that led to repeated errors and incorrect solutions. I have internalized the following lessons to improve future performance:
+4.  **Incremental Tooling Setup:** When adding a new tool (e.g., a test runner, linter), I will first create the simplest possible "hello world" configuration and test case to ensure the tool itself is working correctly before writing any feature-specific logic or tests.
 
-1.  **Build-Tool-First Approach:** My biggest mistake was attempting to solve problems with surface-level application code (e.g., API routes, file-system scripts) when the correct solution lay in the build system. I repeatedly failed to correctly configure Webpack and Turbopack.
-    *   **The New Process:** For tasks involving assets, dependencies, or environment-specific data, I will **always** consider a build-tool solution (e.g., a loader) first. I will not write a single line of application code for this until I have proven that the build tool is correctly providing the necessary data.
-    *   **Lesson:** A silent failure (like an empty dropdown) almost always points to a misconfigured loader or plugin that is failing gracefully. My first step must be to make the build-tool error **loud and explicit** to diagnose the root cause, rather than debugging the application code that consumes the (missing) data.
-
-2.  **Mastering Next.js Configuration:** I demonstrated a critical lack of knowledge regarding `next.config.ts`, causing multiple errors.
-    *   **`rewrites` vs. API Routes:** I now understand that `rewrites` are for URL-to-URL mapping, not for serving files from `node_modules`. The correct pattern for serving node module assets is a dedicated API route that reads the file.
-    *   **Turbopack vs. Webpack:** I now know that Turbopack and Webpack have distinct loader configurations in `next.config.ts`. I must provide correct rules for both if the project uses Turbopack for development. Turbopack rules require globs (`**/path/to/file.ts`) whereas Webpack can use absolute paths.
-    *   **Staying Current:** I failed to recognize that `params` in Next.js 15 API routes are now promises that must be `await`ed. I will be more vigilant about checking the documentation for the specific framework version in use.
-
-3.  **Trusting User Guidance:** I initially dismissed your suggestion to use the `readonly` attribute, which was the correct and simplest solution. I will give user-provided technical suggestions higher priority in my solution planning.
+5.  **Trust User Guidance:** I will give user-provided technical suggestions and corrections high priority in my solution planning, especially when they propose a simpler, more direct solution.
 
 ## 4. Future Features / TODO
 

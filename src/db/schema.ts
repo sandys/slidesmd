@@ -10,7 +10,7 @@ export const presentations = sqliteTable('presentations', {
 
 export const slides = sqliteTable('slides', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  encryptedContent: text('encrypted_content').notNull().default(''),
+  content: text('content').notNull().default(''),
   order: integer('order').notNull(),
   presentationId: integer('presentation_id').notNull().references(() => presentations.id, { onDelete: 'cascade' }),
 });

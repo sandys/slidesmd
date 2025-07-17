@@ -34,7 +34,7 @@ export async function createPresentation(initialEncryptedContent: string) {
       .insert(slides)
       .values({
         presentationId: presentationIdAsNumber,
-        encryptedContent: initialEncryptedContent,
+        content: initialEncryptedContent,
         order: 1,
       })
       .run();
@@ -58,7 +58,7 @@ export async function getPresentation(publicId: string) {
 
 type Slide = {
     id?: number;
-    encryptedContent: string;
+    content: string;
     order: number;
 };
 
@@ -96,12 +96,12 @@ export async function updatePresentation(publicId: string, editKey: string, newS
             if (slide.id) {
                 await tx
                     .update(slides)
-                    .set({ encryptedContent: slide.encryptedContent, order: slide.order })
+                    .set({ content: slide.content, order: slide.order })
                     .where(eq(slides.id, slide.id));
             } else {
                 await tx.insert(slides).values({
                     presentationId: presentation.id,
-                    encryptedContent: slide.encryptedContent,
+                    content: slide.content,
                     order: slide.order,
                 });
             }

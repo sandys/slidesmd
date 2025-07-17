@@ -9,7 +9,8 @@ interface EditPageProps {
   };
 }
 
-export default async function EditPage({ params }: EditPageProps) {
+export default async function EditPage({ params: paramsPromise }: EditPageProps) {
+  const params = await paramsPromise;
   const presentation = await getPresentation(params.id);
 
   if (!presentation) {

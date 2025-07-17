@@ -30,7 +30,7 @@ export function DecryptionWrapper({ presentation, editKeyFromUrl }: DecryptionWr
         const slides = await Promise.all(
           presentation.slides.map(async (slide) => ({
             ...slide,
-            content: await decrypt(slide.encryptedContent, key),
+            content: await decrypt(slide.content, key),
           }))
         );
         setDecryptedSlides(slides);

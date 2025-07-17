@@ -70,7 +70,7 @@ describe("Server Actions", () => {
       expect(mockTx.insert).toHaveBeenCalledWith(slides);
       expect(mockTx.values).toHaveBeenCalledWith({
         presentationId: mockPresentationId,
-        encryptedContent: mockEncryptedContent,
+        content: mockEncryptedContent,
         order: 1,
       });
       expect(result).toEqual({ publicId: mockPublicId, editKey: mockEditKey });
@@ -137,11 +137,11 @@ describe("Server Actions", () => {
       vi.mocked(db.transaction).mockImplementation(async (callback) => callback(mockTx as any));
     });
 
-    it("should update an existing slide with encrypted content", async () => {
-      const newSlides = [{ id: 1, encryptedContent: "new-encrypted-data", order: 1 }];
+    it("should update an existing slide with content", async () => {
+      const newSlides = [{ id: 1, content: "new-data", order: 1 }];
       await updatePresentation(mockPublicId, mockEditKey, newSlides as any);
       expect(mockTx.update).toHaveBeenCalledWith(slides);
-      expect(mockTx.set).toHaveBeenCalledWith({ encryptedContent: "new-encrypted-data", order: 1 });
+      expect(mockTx.set).toHaveBeenCalledWith({ content: "new-data", order: 1 });
     });
   });
 });
