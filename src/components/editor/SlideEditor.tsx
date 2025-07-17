@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -7,6 +8,7 @@ import {
 } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
 import { RevealPreview } from "./RevealPreview";
+import { ThemeSelector } from "./ThemeSelector";
 
 interface SlideEditorProps {
   content: string;
@@ -14,8 +16,11 @@ interface SlideEditorProps {
 }
 
 export function SlideEditor({ content, onContentChange }: SlideEditorProps) {
+  const [theme, setTheme] = useState("black.css");
+
   return (
-    <div className="border rounded-lg p-4">
+    <div className="border rounded-lg p-4 space-y-4">
+      <ThemeSelector selectedTheme={theme} onThemeChange={setTheme} />
       <ResizablePanelGroup
         direction="horizontal"
         className="w-full rounded-lg border"
@@ -33,7 +38,7 @@ export function SlideEditor({ content, onContentChange }: SlideEditorProps) {
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={50}>
           <div className="h-full w-full overflow-hidden">
-            <RevealPreview key={content} markdown={content} />
+            <RevealPreview key={`${content}-${theme}`} markdown={content} theme={theme} />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

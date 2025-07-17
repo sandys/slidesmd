@@ -4,15 +4,36 @@ import { useEffect, useRef } from "react";
 import Reveal from "reveal.js";
 import Markdown from "reveal.js/plugin/markdown/markdown";
 import "reveal.js/dist/reveal.css";
-import "reveal.js/dist/theme/black.css";
+// Note: The theme CSS is now loaded dynamically below
 
 interface RevealPreviewProps {
   markdown: string;
+  theme: string;
 }
 
-export function RevealPreview({ markdown }: RevealPreviewProps) {
+export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
   const deckRef = useRef<Reveal.Api | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const themeLinkRef = useRef<HTMLLinkElement | null>(null);
+
+  // Effect for theme switching
+  useEffect(() => {
+    if (!themeLinkRef.current) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      document.head.appendChild(link);
+      themeLinkRef.current = link;
+    }
+    themeLinkRef.current.href = `/api/themes/${theme}`;
+
+    return () => {
+      // On component unmount, remove the theme link
+      if (themeLinkRef.current) {
+        themeLinkRef.current.remove();
+        themeLinkRef.current = null;
+      }
+    };
+  }, [theme]);
 
   // Effect for one-time initialization
   useEffect(() => {
@@ -26,7 +47,6 @@ export function RevealPreview({ markdown }: RevealPreviewProps) {
 
     deck.initialize().then(() => {
       deckRef.current = deck;
-      // Initial content load
       updateSlides(deck, markdown);
     });
 
@@ -40,7 +60,7 @@ export function RevealPreview({ markdown }: RevealPreviewProps) {
         console.warn("Reveal.js destroy call failed.", e);
       }
     };
-  }, []); // Empty dependency array ensures this runs only once
+  }, []); // Runs only once
 
   // Effect for updating slides when markdown changes
   useEffect(() => {
@@ -50,7 +70,6 @@ export function RevealPreview({ markdown }: RevealPreviewProps) {
   }, [markdown]);
 
   const updateSlides = (deck: Reveal.Api, newMarkdown: string) => {
-    // This is the correct API to update the slides
     const slidesContainer = deck.getSlidesElement();
     if (slidesContainer) {
       slidesContainer.innerHTML = `
@@ -60,15 +79,13 @@ export function RevealPreview({ markdown }: RevealPreviewProps) {
           </textarea>
         </section>
       `;
-      // After setting the content, we need to tell Reveal.js to re-sync
       deck.sync();
-      deck.slide(0, 0); // Optional: reset to the first slide on update
+      deck.slide(0, 0);
     }
   };
 
   return (
     <div className="reveal h-full w-full" ref={containerRef}>
-      {/* The slides div will be populated by Reveal.js */}
       <div className="slides"></div>
     </div>
   );
