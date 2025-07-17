@@ -25,19 +25,23 @@ export function PresentationEditor({
   presentation,
   editKeyFromUrl,
 }: PresentationEditorProps) {
+  console.log("[PresentationEditor] Received presentation:", presentation);
   const [slides, setSlides] = useState<Slide[]>(presentation.slides);
   const [isSaving, startSaveTransition] = useTransition();
   const [isShareDialogOpen, setShareDialogOpen] = useState(false);
 
   const hasEditAccess = !!editKeyFromUrl;
+  console.log("[PresentationEditor] Edit access:", hasEditAccess);
 
   const handleSlideChange = (index: number, content: string) => {
+    console.log(`[PresentationEditor] Slide #${index + 1} content changed:`, content);
     const newSlides = [...slides];
     newSlides[index].content = content;
     setSlides(newSlides);
   };
 
   const handleAddSlide = () => {
+    console.log("[PresentationEditor] Adding new slide...");
     const newSlides = [
       ...slides,
       {
@@ -48,33 +52,53 @@ export function PresentationEditor({
       },
     ];
     setSlides(newSlides);
+    console.log("[PresentationEditor] New slides state:", newSlides);
   };
 
   const handleSaveChanges = () => {
+    console.log("[PresentationEditor] Starting save process...");
     startSaveTransition(async () => {
       try {
         const keyString = window.location.hash.substring(1);
+        console.log("[PresentationEditor] Extracted key string for encryption:", keyString);
         if (!keyString || !editKeyFromUrl) {
-            alert("Cannot save. Decryption key or edit key is missing.");
+            const errorMsg = "Cannot save. Decryption key or edit key is missing.";
+            console.error(`[PresentationEditor] ${errorMsg}`);
+            alert(errorMsg);
             return;
         }
+        console.log("[PresentationEditor] Importing key for encryption...");
         const key = await importKey(keyString);
+        console.log("[PresentationEditor] Key imported successfully.");
 
+        console.log("[PresentationEditor] Encrypting slides for saving...");
         const encryptedSlides = await Promise.all(
-            slides.map(async (slide) => ({
-                id: slide.id,
-                order: slide.order,
-                encryptedContent: await encrypt(slide.content, key),
-            }))
+            slides.map(async (slide, index) => {
+                console.log(`[PresentationEditor] Encrypting slide #${index + 1}:`, slide.content);
+                const encryptedContent = await encrypt(slide.content, key);
+                console.log(`[PresentationEditor] Encrypted content for slide #${index + 1}:`, encryptedContent);
+                return {
+                    id: slide.id,
+                    order: slide.order,
+                    content: encryptedContent,
+                };
+            })
         );
+        console.log("[PresentationEditor] All slides encrypted:", encryptedSlides);
 
+        console.log("[PresentationEditor] Calling updatePresentation action...");
         await updatePresentation(presentation.publicId, editKeyFromUrl, encryptedSlides);
+        console.log("[PresentationEditor] updatePresentation action completed.");
         alert("Presentation saved!");
       } catch (error) {
-        alert(`Error saving: ${error instanceof Error ? error.message : "Unknown error"}`);
+        const errorMsg = `Error saving: ${error instanceof Error ? error.message : "Unknown error"}`;
+        console.error(`[PresentationEditor] ${errorMsg}`, error);
+        alert(errorMsg);
       }
     });
   };
+
+  console.log("[PresentationEditor] Rendering with slides:", slides);
 
   return (
     <div className="p-4 space-y-4">

@@ -5,7 +5,7 @@ import { presentations, slides } from "@/db/schema";
 import { nanoid } from "nanoid";
 import bcrypt from "bcrypt";
 import { redirect } from "next/navigation";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, not } from "drizzle-orm";
 
 export async function createPresentation(initialEncryptedContent: string) {
   const publicId = nanoid(8);
@@ -78,26 +78,32 @@ export async function updatePresentation(publicId: string, editKey: string, newS
     }
 
     await db.transaction(async (tx) => {
-        const slideIdsToKeep = newSlides.map((s) => s.id).filter(Boolean) as number[];
+        const slideIdsToKeep = newSlides.map((s) => s.id).filter(s => typeof s === 'number' && !isNaN(s)) as number[];
+        
+        // Delete slides that are not in the 'keep' list
         if (slideIdsToKeep.length > 0) {
             await tx
                 .delete(slides)
                 .where(
                     and(
                         eq(slides.presentationId, presentation.id),
-                        inArray(slides.id, slideIdsToKeep)
+                        not(inArray(slides.id, slideIdsToKeep))
                     )
                 );
         } else {
+            // If there are no slides to keep, delete all for this presentation
             await tx.delete(slides).where(eq(slides.presentationId, presentation.id));
         }
 
+        // Update existing slides and insert new ones
         for (const slide of newSlides) {
-            if (slide.id) {
+            const isExistingSlide = typeof slide.id === 'number' && !isNaN(slide.id);
+
+            if (isExistingSlide) {
                 await tx
                     .update(slides)
                     .set({ content: slide.content, order: slide.order })
-                    .where(eq(slides.id, slide.id));
+                    .where(and(eq(slides.id, slide.id as number), eq(slides.presentationId, presentation.id)));
             } else {
                 await tx.insert(slides).values({
                     presentationId: presentation.id,
