@@ -9,9 +9,7 @@ interface PrintPageProps {
   };
 }
 
-export default async function PrintPage({ params: paramsPromise }: PrintPageProps) {
-  // Await the params promise as required by Next.js 15
-  const params = await paramsPromise;
+export default async function PrintPage({ params }: PrintPageProps) {
   console.log("Print page server params:", params);
   const presentation = await getPresentation(params.id);
 

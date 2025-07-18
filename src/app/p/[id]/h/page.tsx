@@ -8,8 +8,7 @@ interface ViewPageProps {
   };
 }
 
-export default async function ViewPage({ params: paramsPromise }: ViewPageProps) {
-  const params = await paramsPromise;
+export default async function ViewPage({ params }: ViewPageProps) {
   const presentation = await getPresentation(params.id);
 
   if (!presentation) {
