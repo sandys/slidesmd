@@ -4,14 +4,15 @@ import { PrintWrapper } from "@/components/editor/PrintWrapper";
 import { notFound } from "next/navigation";
 
 interface PrintPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function PrintPage({ params }: PrintPageProps) {
-  console.log("Print page server params:", params);
-  const presentation = await getPresentation(params.id);
+  const { id } = await params;
+  console.log("Print page server params:", id);
+  const presentation = await getPresentation(id);
 
   if (!presentation) {
     return notFound();

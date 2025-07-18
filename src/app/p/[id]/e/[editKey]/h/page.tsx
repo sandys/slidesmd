@@ -3,14 +3,15 @@ import { getPresentation } from "@/app/actions";
 import { DecryptionWrapper } from "@/components/editor/DecryptionWrapper";
 
 interface EditPageProps {
-  params: {
+  params: Promise<{
     id: string;
     editKey: string;
-  };
+  }>;
 }
 
 export default async function EditPage({ params }: EditPageProps) {
-  const presentation = await getPresentation(params.id);
+  const { id, editKey } = await params;
+  const presentation = await getPresentation(id);
 
   if (!presentation) {
     return <div>Presentation not found</div>;
@@ -19,7 +20,7 @@ export default async function EditPage({ params }: EditPageProps) {
   return (
     <DecryptionWrapper
       presentation={presentation}
-      editKeyFromUrl={params.editKey}
+      editKeyFromUrl={editKey}
     />
   );
 }
