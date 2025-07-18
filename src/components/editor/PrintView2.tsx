@@ -41,6 +41,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
     return () => {
       if (themeLinkRef.current) {
         document.head.removeChild(themeLinkRef.current);
+        themeLinkRef.current = null;
       }
     };
   }, [presentation.theme]);
