@@ -82,9 +82,15 @@ export function PrintView2({ presentation }: PrintView2Props) {
     };
   }, []);
 
+  console.log("PrintView2: Number of slides:", presentation.slides.length);
   const combinedMarkdown = presentation.slides
-    .map((slide) => slide.content)
+    .map((slide, index) => {
+      console.log(`PrintView2: Slide ${index} content:`, slide.content);
+      return slide.content;
+    })
     .join("\n---\n");
+
+  console.log("PrintView2: combinedMarkdown:", combinedMarkdown);
 
   return (
     <div ref={revealRef} className="reveal">
