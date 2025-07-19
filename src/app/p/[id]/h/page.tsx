@@ -3,14 +3,14 @@ import { getPresentation } from "@/app/actions";
 import { DecryptionWrapper } from "@/components/editor/DecryptionWrapper";
 
 interface ViewPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default async function ViewPage({ params: paramsPromise }: ViewPageProps) {
-  const params = await paramsPromise;
-  const presentation = await getPresentation(params.id);
+export default async function ViewPage({ params }: ViewPageProps) {
+  const { id } = await params;
+  const presentation = await getPresentation(id);
 
   if (!presentation) {
     return <div>Presentation not found</div>;

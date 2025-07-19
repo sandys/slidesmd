@@ -6,6 +6,7 @@ import type { getPresentation } from "@/app/actions";
 
 // Import base reveal.js styles
 import "reveal.js/dist/reveal.css";
+import "reveal.js/css/print/pdf.scss";
 
 import Reveal from "reveal.js";
 import Markdown from "reveal.js/plugin/markdown/markdown.esm.js";
@@ -27,19 +28,26 @@ export function PrintView2({ presentation }: PrintView2Props) {
 
   // Effect 1: Load theme
   useEffect(() => {
-    if (!themeLinkRef.current) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      document.head.appendChild(link);
-      themeLinkRef.current = link;
+    let link = themeLinkRef.current;
+    if (!link) {
+      link = document.getElementById("reveal-theme") as HTMLLinkElement | null;
     }
-    const themeUrl = `/api/themes/${presentation.theme || 'black.css'}`;
-    console.log("Setting theme URL to:", themeUrl);
-    themeLinkRef.current.href = themeUrl;
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.id = "reveal-theme";
+      document.head.appendChild(link);
+      console.log("PrintView2: Theme link appended to head");
+    }
+    themeLinkRef.current = link;
+    const themeUrl = `/api/themes/${presentation.theme || "black.css"}`;
+    console.log("PrintView2: Setting theme URL to", themeUrl);
+    link.href = themeUrl;
 
     return () => {
       if (themeLinkRef.current) {
-        document.head.removeChild(themeLinkRef.current);
+        themeLinkRef.current.remove();
+        themeLinkRef.current = null;
       }
     };
   }, [presentation.theme]);
@@ -75,11 +83,16 @@ export function PrintView2({ presentation }: PrintView2Props) {
     };
   }, []);
 
+  console.log("PrintView2: Number of slides:", presentation.slides.length);
+  presentation.slides.forEach((slide, index) => {
+    console.log(`PrintView2: Slide ${index} content:`, slide.content);
+  });
+
   return (
     <div ref={revealRef} className="reveal">
       <div className="slides">
         {presentation.slides.map((slide) => (
-          <section key={slide.id} data-markdown>
+          <section key={slide.id} data-markdown="">
             <textarea data-template defaultValue={slide.content}></textarea>
           </section>
         ))}

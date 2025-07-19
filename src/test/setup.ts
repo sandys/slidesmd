@@ -38,3 +38,6 @@ vi.mock("reveal.js/dist/theme/blood.css", () => ({
 vi.mock("reveal.js/dist/theme/moon.css", () => ({
     default: "",
 }));
+vi.mock("reveal.js/css/print/pdf.scss", () => ({
+    default: "",
+}));
