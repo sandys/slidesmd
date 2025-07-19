@@ -87,20 +87,21 @@ export function PrintView2({ presentation }: PrintView2Props) {
   presentation.slides.forEach((slide, index) => {
     console.log(`PrintView2: Slide ${index} content:`, slide.content);
   });
+  const combinedMarkdown = presentation.slides
+    .map((slide) => slide.content)
+    .join("\n---\n");
+  console.log("PrintView2: combinedMarkdown:", combinedMarkdown);
 
   return (
     <div ref={revealRef} className="reveal">
       <div className="slides">
-        {presentation.slides.map((slide) => (
-          <section
-            key={slide.id}
-            data-markdown=""
-            data-separator="^\\n---\\n$"
-            data-separator-vertical="^\\n--\\n$"
-          >
-            <script type="text/template">{slide.content}</script>
-          </section>
-        ))}
+        <section
+          data-markdown=""
+          data-separator="^\\n---\\n$"
+          data-separator-vertical="^\\n--\\n$"
+        >
+          <script type="text/template">{combinedMarkdown}</script>
+        </section>
       </div>
     </div>
   );
