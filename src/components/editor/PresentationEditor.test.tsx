@@ -8,6 +8,9 @@ import * as actions from "@/app/actions";
 // Mock dependencies
 vi.mock("@/lib/crypto");
 vi.mock("@/app/actions");
+vi.mock("@/lib/themes", () => ({
+  themes: ["black.css", "white.css", "league.css"],
+}));
 
 const mockPresentation = {
   id: 1,

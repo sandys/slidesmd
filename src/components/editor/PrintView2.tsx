@@ -6,6 +6,7 @@ import type { getPresentation } from "@/app/actions";
 
 // Import base reveal.js styles
 import "reveal.js/dist/reveal.css";
+import "reveal.js/css/print/pdf.scss";
 
 import Reveal from "reveal.js";
 import Markdown from "reveal.js/plugin/markdown/markdown.esm.js";
@@ -27,19 +28,25 @@ export function PrintView2({ presentation }: PrintView2Props) {
 
   // Effect 1: Load theme
   useEffect(() => {
-    if (!themeLinkRef.current) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      document.head.appendChild(link);
-      themeLinkRef.current = link;
+    let link = themeLinkRef.current;
+    if (!link) {
+      link = document.getElementById("reveal-theme") as HTMLLinkElement | null;
     }
-    const themeUrl = `/api/themes/${presentation.theme || 'black.css'}`;
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.id = "reveal-theme";
+      document.head.appendChild(link);
+    }
+    themeLinkRef.current = link;
+    const themeUrl = `/api/themes/${presentation.theme || "black.css"}`;
     console.log("Setting theme URL to:", themeUrl);
-    themeLinkRef.current.href = themeUrl;
+    link.href = themeUrl;
 
     return () => {
       if (themeLinkRef.current) {
         document.head.removeChild(themeLinkRef.current);
+        themeLinkRef.current = null;
       }
     };
   }, [presentation.theme]);
@@ -75,14 +82,16 @@ export function PrintView2({ presentation }: PrintView2Props) {
     };
   }, []);
 
+  const combinedMarkdown = presentation.slides
+    .map((slide) => slide.content)
+    .join("\n---\n");
+
   return (
     <div ref={revealRef} className="reveal">
       <div className="slides">
-        {presentation.slides.map((slide) => (
-          <section key={slide.id} data-markdown>
-            <textarea data-template defaultValue={slide.content}></textarea>
-          </section>
-        ))}
+        <section data-markdown="">
+          <textarea data-template defaultValue={combinedMarkdown}></textarea>
+        </section>
       </div>
     </div>
   );
