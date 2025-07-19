@@ -6,6 +6,7 @@ import type { getPresentation } from "@/app/actions";
 
 // Import base reveal.js styles
 import "reveal.js/dist/reveal.css";
+import "reveal.js/css/print/pdf.scss";
 
 import Reveal from "reveal.js";
 import Markdown from "reveal.js/plugin/markdown/markdown.esm.js";
@@ -27,19 +28,26 @@ export function PrintView2({ presentation }: PrintView2Props) {
 
   // Effect 1: Load theme
   useEffect(() => {
-    if (!themeLinkRef.current) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      document.head.appendChild(link);
-      themeLinkRef.current = link;
+    let link = themeLinkRef.current;
+    if (!link) {
+      link = document.getElementById("reveal-theme") as HTMLLinkElement | null;
     }
-    const themeUrl = `/api/themes/${presentation.theme || 'black.css'}`;
-    console.log("Setting theme URL to:", themeUrl);
-    themeLinkRef.current.href = themeUrl;
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.id = "reveal-theme";
+      document.head.appendChild(link);
+      console.log("PrintView2: Theme link appended to head");
+    }
+    themeLinkRef.current = link;
+    const themeUrl = `/api/themes/${presentation.theme || "black.css"}`;
+    console.log("PrintView2: Setting theme URL to", themeUrl);
+    link.href = themeUrl;
 
     return () => {
       if (themeLinkRef.current) {
-        document.head.removeChild(themeLinkRef.current);
+        themeLinkRef.current.remove();
+        themeLinkRef.current = null;
       }
     };
   }, [presentation.theme]);
@@ -57,6 +65,13 @@ export function PrintView2({ presentation }: PrintView2Props) {
 
       deck.initialize().then(() => {
         console.log("PrintView2: Reveal.js initialized successfully.");
+        console.log(
+          "PrintView2: deck view",
+          deck.getConfig().view,
+          "isPrintView",
+          deck.isPrintView()
+        );
+        document.documentElement.classList.add("reveal-print", "print-pdf");
       });
     }
 
@@ -69,20 +84,32 @@ export function PrintView2({ presentation }: PrintView2Props) {
         } catch (e) {
           console.error("PrintView2: Error during Reveal.js destroy:", e);
         }
+        document.documentElement.classList.remove("reveal-print", "print-pdf");
         // Reset the singleton instance so it can be re-initialized if the page is ever revisited.
         deck = null;
       }
     };
   }, []);
 
+  console.log("PrintView2: Number of slides:", presentation.slides.length);
+  presentation.slides.forEach((slide, index) => {
+    console.log(`PrintView2: Slide ${index} content:`, slide.content);
+  });
+  const combinedMarkdown = presentation.slides
+    .map((slide) => slide.content)
+    .join("\n---\n");
+  console.log("PrintView2: combinedMarkdown:", combinedMarkdown);
+
   return (
     <div ref={revealRef} className="reveal">
       <div className="slides">
-        {presentation.slides.map((slide) => (
-          <section key={slide.id} data-markdown>
-            <textarea data-template defaultValue={slide.content}></textarea>
-          </section>
-        ))}
+        <section
+          data-markdown=""
+          data-separator="^\\n---\\n$"
+          data-separator-vertical="^\\n--\\n$"
+        >
+          <script type="text/template">{combinedMarkdown}</script>
+        </section>
       </div>
     </div>
   );
