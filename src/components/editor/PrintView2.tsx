@@ -37,10 +37,11 @@ export function PrintView2({ presentation }: PrintView2Props) {
       link.rel = "stylesheet";
       link.id = "reveal-theme";
       document.head.appendChild(link);
+      console.log("PrintView2: Theme link appended to head");
     }
     themeLinkRef.current = link;
     const themeUrl = `/api/themes/${presentation.theme || "black.css"}`;
-    console.log("Setting theme URL to:", themeUrl);
+    console.log("PrintView2: Setting theme URL to", themeUrl);
     link.href = themeUrl;
 
     return () => {
