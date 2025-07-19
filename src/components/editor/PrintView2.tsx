@@ -65,6 +65,13 @@ export function PrintView2({ presentation }: PrintView2Props) {
 
       deck.initialize().then(() => {
         console.log("PrintView2: Reveal.js initialized successfully.");
+        console.log(
+          "PrintView2: deck view",
+          deck.getConfig().view,
+          "isPrintView",
+          deck.isPrintView()
+        );
+        document.documentElement.classList.add("reveal-print", "print-pdf");
       });
     }
 
@@ -77,6 +84,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
         } catch (e) {
           console.error("PrintView2: Error during Reveal.js destroy:", e);
         }
+        document.documentElement.classList.remove("reveal-print", "print-pdf");
         // Reset the singleton instance so it can be re-initialized if the page is ever revisited.
         deck = null;
       }
