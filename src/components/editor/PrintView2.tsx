@@ -44,10 +44,11 @@ export function PrintView2({ presentation }: PrintView2Props) {
     link.href = themeUrl;
 
     return () => {
-      if (themeLinkRef.current) {
-        document.head.removeChild(themeLinkRef.current);
-        themeLinkRef.current = null;
+      const linkEl = themeLinkRef.current;
+      if (linkEl && document.head.contains(linkEl)) {
+        document.head.removeChild(linkEl);
       }
+      themeLinkRef.current = null;
     };
   }, [presentation.theme]);
 
