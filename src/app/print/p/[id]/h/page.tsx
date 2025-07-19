@@ -21,6 +21,8 @@ export default async function PrintPage({ params }: PrintPageProps) {
   // Include the theme stylesheet server-side so it's available on first render
   return (
     <>
+      <link rel="stylesheet" href="/api/reveal/dist/reveal.css" />
+      <link rel="stylesheet" href="/api/reveal/css/print/pdf.css" />
       <link
         id="reveal-theme"
         rel="stylesheet"
