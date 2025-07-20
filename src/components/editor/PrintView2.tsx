@@ -86,7 +86,7 @@ export function PrintView2({ presentation, config = {} }: PrintView2Props) {
   console.log("All slide markdown", allSlides);
 
   return (
-    <div ref={revealRef} className="reveal">
+    <div ref={revealRef} className="reveal h-[700px]">
       <div className="slides">
         <section
           data-markdown=""

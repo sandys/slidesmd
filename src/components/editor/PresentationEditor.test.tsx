@@ -9,6 +9,9 @@ import { toast } from "sonner";
 // Mock dependencies
 vi.mock("@/lib/crypto");
 vi.mock("@/app/actions");
+vi.mock("./PrintPreview", () => ({
+  PrintPreview: () => <div data-testid="print-preview" />,
+}));
 
 const mockPresentation = {
   id: 1,
