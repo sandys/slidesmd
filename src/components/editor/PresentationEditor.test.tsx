@@ -67,4 +67,16 @@ describe("PresentationEditor", () => {
       ).toBeInTheDocument();
     });
   });
+
+  it("disables editing when no edit key is provided", () => {
+    render(<PresentationEditor presentation={mockPresentation} />);
+
+    const textarea = screen.getByDisplayValue("decrypted-content");
+    const addBtn = screen.getByText("Add New Slide");
+    const saveBtn = screen.getByText("Save Changes");
+
+    expect(textarea).toBeDisabled();
+    expect(addBtn).toBeDisabled();
+    expect(saveBtn).toBeDisabled();
+  });
 });
