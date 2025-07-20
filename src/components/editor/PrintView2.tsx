@@ -9,6 +9,8 @@ import "reveal.js/dist/reveal.css";
 
 import Reveal from "reveal.js";
 import Markdown from "reveal.js/plugin/markdown/markdown.esm.js";
+import Highlight from "reveal.js/plugin/highlight/highlight.esm.js";
+import Notes from "reveal.js/plugin/notes/notes.esm.js";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 
@@ -33,7 +35,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
       document.head.appendChild(link);
       themeLinkRef.current = link;
     }
-    const themeUrl = `/api/themes/${presentation.theme || 'black.css'}`;
+    const themeUrl = `/api/themes/${presentation.theme || "black.css"}`;
     themeLinkRef.current.href = themeUrl;
 
     return () => {
@@ -48,9 +50,23 @@ export function PrintView2({ presentation }: PrintView2Props) {
     // Only initialize if the deck hasn't been created yet.
     if (!deck && revealRef.current) {
       deck = new Reveal(revealRef.current, {
-        embedded: true,
-        plugins: [Markdown],
-        view: 'print',
+        hash: true,
+        width: 1920,
+        height: 1080,
+        margin: 0.01,
+        minScale: 0.4,
+        maxScale: 1,
+        progress: true,
+        history: true,
+        center: true,
+        controls: true,
+        slideNumber: "c",
+        pdfSeparateFragments: true,
+        pdfMaxPagesPerSlide: 1,
+        pdfPageHeightOffset: -1,
+        transition: "slide",
+        plugins: [Markdown, Highlight, Notes],
+        view: "print",
       });
       deck.initialize().catch((err) => console.error("Reveal init error", err));
     }
@@ -69,9 +85,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
     };
   }, []);
 
-  const allSlides = presentation.slides
-    .map((s) => s.content)
-    .join("\n---\n");
+  const allSlides = presentation.slides.map((s) => s.content).join("\n---\n");
 
   return (
     <div ref={revealRef} className="reveal">
