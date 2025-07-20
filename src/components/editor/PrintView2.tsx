@@ -41,6 +41,9 @@ export function PrintView2({ presentation }: PrintView2Props) {
     return () => {
       if (themeLinkRef.current) {
         document.head.removeChild(themeLinkRef.current);
+        // Reset the ref so the link will be recreated on the
+        // second mount that occurs in React Strict Mode.
+        themeLinkRef.current = null;
       }
     };
   }, [presentation.theme]);
