@@ -35,6 +35,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
       themeLinkRef.current = link;
     }
     const themeUrl = `/api/themes/${presentation.theme || "black.css"}`;
+    console.log("Loading theme", themeUrl);
     themeLinkRef.current.href = themeUrl;
 
     return () => {
@@ -52,6 +53,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
         const { default: Highlight } = await import(
           "reveal.js/plugin/highlight/highlight.esm.js"
         );
+        console.log("Initializing Reveal at", window.location.href);
         deck = new Reveal(revealRef.current!, {
           hash: false,
           width: 1920,
@@ -60,7 +62,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
           minScale: 0.4,
           maxScale: 1,
           progress: true,
-          history: true,
+          history: false,
           center: true,
           controls: true,
           slideNumber: "c",
@@ -72,6 +74,10 @@ export function PrintView2({ presentation }: PrintView2Props) {
           view: "print",
         });
         await deck.initialize();
+        console.log("Reveal initialized", deck);
+        if (revealRef.current) {
+          console.log("Reveal HTML", revealRef.current.outerHTML);
+        }
       })().catch((err) => console.error("Reveal init error", err));
     }
 
@@ -90,6 +96,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
   }, []);
 
   const allSlides = presentation.slides.map((s) => s.content).join("\n---\n");
+  console.log("All slide markdown", allSlides);
 
   return (
     <div ref={revealRef} className="reveal">
@@ -102,7 +109,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
           <script
             type="text/template"
             dangerouslySetInnerHTML={{ __html: allSlides }}
-          />
+          ></script>
         </section>
       </div>
     </div>

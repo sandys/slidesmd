@@ -20,6 +20,7 @@ export function PrintWrapper({ presentation }: PrintWrapperProps) {
     const decryptSlides = async () => {
       try {
         const keyString = window.location.hash.substring(1);
+        console.log("PrintWrapper hash", window.location.hash);
         if (!keyString) {
           setError("No decryption key found in URL.");
           return;
@@ -32,6 +33,7 @@ export function PrintWrapper({ presentation }: PrintWrapperProps) {
             content: await decrypt(slide.content, key),
           }))
         );
+        console.log("Decrypted", slides.length, "slides");
         setDecryptedSlides(slides);
       } catch (e) {
         console.error("Failed to decrypt presentation for printing:", e);
