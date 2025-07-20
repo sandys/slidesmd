@@ -55,13 +55,9 @@ export function PrintView2({ presentation }: PrintView2Props) {
         );
         console.log("Initializing Reveal at", window.location.href);
         deck = new Reveal(revealRef.current!, {
-          view: "print",
           hash: false,
-          width: 1920,
-          height: 1080,
-          margin: 0.01,
-          minScale: 0.4,
-          maxScale: 1,
+          // Use Reveal's default slide dimensions to avoid overly small text
+          // when the deck scales slides to fit the viewport.
           progress: true,
           history: false,
           center: true,
