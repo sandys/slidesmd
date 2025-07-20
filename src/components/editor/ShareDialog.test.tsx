@@ -1,6 +1,6 @@
 // src/components/editor/ShareDialog.test.tsx
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ShareDialog } from "./ShareDialog";
 
 const origin = window.location.origin;
@@ -12,7 +12,6 @@ describe("ShareDialog", () => {
       value: { writeText: vi.fn().mockResolvedValue(undefined) },
       writable: true,
     });
-    window.alert = vi.fn();
   });
 
   it("should not render when closed", () => {
@@ -27,7 +26,7 @@ describe("ShareDialog", () => {
     ).toBeInTheDocument();
   });
 
-  it("should copy edit link to clipboard", () => {
+  it("should copy edit link to clipboard", async () => {
     render(
       <ShareDialog isOpen onClose={() => {}} publicId="abc" editKey="ed1" />
     );
@@ -36,5 +35,8 @@ describe("ShareDialog", () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
       `${origin}/p/abc/e/ed1/h#testkey`
     );
+    await waitFor(() => {
+      expect(screen.getByText("Copied!")).toBeInTheDocument();
+    });
   });
 });

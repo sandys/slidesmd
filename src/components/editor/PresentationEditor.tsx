@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import { getPresentation, updatePresentation } from "@/app/actions";
 import { SlideEditor } from "./SlideEditor";
 import { encrypt, importKey } from "@/lib/crypto";
@@ -30,6 +32,8 @@ export function PresentationEditor({
   const [theme, setTheme] = useState(presentation.theme);
   const [isSaving, startSaveTransition] = useTransition();
   const [isShareDialogOpen, setShareDialogOpen] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [statusType, setStatusType] = useState<"success" | "error" | null>(null);
 
   const hasEditAccess = !!editKeyFromUrl;
 
@@ -54,10 +58,12 @@ export function PresentationEditor({
 
   const handleSaveChanges = () => {
     startSaveTransition(async () => {
+      setStatus(null);
       try {
         const keyString = window.location.hash.substring(1);
         if (!keyString || !editKeyFromUrl) {
-            alert("Cannot save. Decryption key or edit key is missing.");
+            setStatus("Cannot save. Decryption key or edit key is missing.");
+            setStatusType("error");
             return;
         }
         const key = await importKey(keyString);
@@ -70,10 +76,19 @@ export function PresentationEditor({
             }))
         );
 
-        await updatePresentation(presentation.publicId, editKeyFromUrl, encryptedSlides, theme);
-        alert("Presentation saved!");
+        await updatePresentation(
+          presentation.publicId,
+          editKeyFromUrl,
+          encryptedSlides,
+          theme
+        );
+        setStatus("Presentation saved!");
+        setStatusType("success");
       } catch (error) {
-        alert(`Error saving: ${error instanceof Error ? error.message : "Unknown error"}`);
+        setStatus(
+          `Error saving: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+        setStatusType("error");
       }
     });
   };
@@ -87,10 +102,37 @@ export function PresentationEditor({
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Edit Presentation</h2>
+      <div className="flex justify-between items-center border-b pb-2">
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold mr-4">Edit Presentation</h2>
+          <Button onClick={handleAddSlide} disabled={!hasEditAccess}>
+            Add New Slide
+          </Button>
+          <Button
+            onClick={handleSaveChanges}
+            disabled={isSaving || !hasEditAccess}
+            className="gap-2"
+          >
+            {isSaving && <Spinner />}
+            Save Changes
+          </Button>
+          {status && (
+            <span
+              className={cn(
+                "text-sm",
+                statusType === "error" ? "text-red-600" : "text-green-600"
+              )}
+            >
+              {status}
+            </span>
+          )}
+          <Button variant="secondary" onClick={() => setShareDialogOpen(true)}>
+            Share
+          </Button>
+          <Button variant="outline" onClick={handlePrint}>Export to PDF</Button>
+        </div>
         <div className="w-48">
-            <ThemeSelector selectedTheme={theme} onThemeChange={setTheme} />
+          <ThemeSelector selectedTheme={theme} onThemeChange={setTheme} />
         </div>
       </div>
 
@@ -102,14 +144,6 @@ export function PresentationEditor({
           theme={theme}
         />
       ))}
-      <div className="flex space-x-2">
-        <Button onClick={handleAddSlide} disabled={!hasEditAccess}>Add New Slide</Button>
-        <Button onClick={handleSaveChanges} disabled={isSaving || !hasEditAccess}>
-          {isSaving ? "Saving..." : "Save Changes"}
-        </Button>
-        <Button variant="secondary" onClick={() => setShareDialogOpen(true)}>Share</Button>
-        <Button variant="outline" onClick={handlePrint}>Export to PDF</Button>
-      </div>
       <ShareDialog
         isOpen={isShareDialogOpen}
         onClose={() => setShareDialogOpen(false)}
