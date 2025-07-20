@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import Reveal from "reveal.js";
 import Markdown from "reveal.js/plugin/markdown/markdown.esm.js";
 import "reveal.js/dist/reveal.css";
-// Note: The theme CSS is now loaded dynamically below
+// Note: Theme CSS is loaded dynamically so previews match the selector
 
 interface RevealPreviewProps {
   markdown: string;
@@ -13,10 +13,10 @@ interface RevealPreviewProps {
 
 export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
   const deckRef = useRef<Reveal.Api | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const revealRef = useRef<HTMLDivElement | null>(null);
   const themeLinkRef = useRef<HTMLLinkElement | null>(null);
 
-  // Effect for theme switching
+  // Load or update the selected theme
   useEffect(() => {
     if (!themeLinkRef.current) {
       const link = document.createElement("link");
@@ -24,67 +24,64 @@ export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
       document.head.appendChild(link);
       themeLinkRef.current = link;
     }
-    themeLinkRef.current.href = `/themes/${theme}`;
+
+    const themeUrl = `/themes/${theme}`;
+    const linkEl = themeLinkRef.current;
+    linkEl.onload = () => deckRef.current?.layout();
+    linkEl.href = themeUrl;
 
     return () => {
-      // On component unmount, remove the theme link
       if (themeLinkRef.current) {
+        themeLinkRef.current.onload = null;
         themeLinkRef.current.remove();
         themeLinkRef.current = null;
       }
     };
   }, [theme]);
 
-  // Effect for one-time initialization
+  // Initialize reveal once and re-sync when markdown changes
   useEffect(() => {
-    if (deckRef.current || !containerRef.current) return;
+    if (!revealRef.current) return;
 
-    const deck = new Reveal(containerRef.current, {
-      embedded: true,
-      plugins: [Markdown],
-      enableFocus: false,
-    });
+    if (!deckRef.current) {
+      const deck = new Reveal(revealRef.current, {
+        embedded: true,
+        plugins: [Markdown],
+        enableFocus: false,
+      });
 
-    void deck.initialize().then(() => {
-      deckRef.current = deck;
-      updateSlides(deck, markdown);
-    });
+      void deck.initialize().then(() => {
+        deckRef.current = deck;
+        deck.sync();
+        void deck.slide(0, 0);
+      });
+    } else {
+      deckRef.current.sync();
+      void deckRef.current.slide(0, 0);
+    }
 
     return () => {
-      try {
-        if (deckRef.current) {
-          (deckRef.current as Reveal.Api).destroy();
-          deckRef.current = null;
+      if (deckRef.current) {
+        try {
+          deckRef.current.destroy();
+        } catch (e) {
+          console.warn("Reveal.js destroy failed", e);
         }
-      } catch (e) {
-        console.warn("Reveal.js destroy call failed.", e);
+        deckRef.current = null;
       }
     };
-  }, [markdown]); // Runs only once
-
-  // Effect for updating slides when markdown changes
-  useEffect(() => {
-    if (deckRef.current) {
-      updateSlides(deckRef.current, markdown);
-    }
   }, [markdown]);
 
-  const updateSlides = (deck: Reveal.Api, newMarkdown: string) => {
-    const slidesContainer = deck.getSlidesElement();
-    if (slidesContainer) {
-      slidesContainer.innerHTML = `
-        <section data-markdown>
-          <script type="text/template">${newMarkdown}</script>
-        </section>
-      `;
-      deck.sync();
-      void deck.slide(0, 0);
-    }
-  };
-
   return (
-    <div className="reveal h-full w-full" ref={containerRef}>
-      <div className="slides"></div>
+    <div ref={revealRef} className="reveal h-full w-full">
+      <div className="slides">
+        <section data-markdown>
+          <script
+            type="text/template"
+            dangerouslySetInnerHTML={{ __html: markdown }}
+          />
+        </section>
+      </div>
     </div>
   );
 }
