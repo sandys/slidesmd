@@ -9,6 +9,9 @@ async function generateThemes() {
   const destDir = path.join(process.cwd(), 'public', 'themes');
   await fs.mkdir(destDir, { recursive: true });
 
+  const libDir = path.join(process.cwd(), 'src', 'lib');
+  await fs.mkdir(libDir, { recursive: true });
+
   const files = await fs.readdir(themeDir);
   const cssFiles = files
     .filter((file) => file.endsWith('.css'))
