@@ -9,7 +9,6 @@ import "reveal.js/dist/reveal.css";
 
 import Reveal from "reveal.js";
 import Markdown from "reveal.js/plugin/markdown/markdown.esm.js";
-import Highlight from "reveal.js/plugin/highlight/highlight.esm.js";
 import Notes from "reveal.js/plugin/notes/notes.esm.js";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
@@ -49,26 +48,31 @@ export function PrintView2({ presentation }: PrintView2Props) {
   useEffect(() => {
     // Only initialize if the deck hasn't been created yet.
     if (!deck && revealRef.current) {
-      deck = new Reveal(revealRef.current, {
-        hash: true,
-        width: 1920,
-        height: 1080,
-        margin: 0.01,
-        minScale: 0.4,
-        maxScale: 1,
-        progress: true,
-        history: true,
-        center: true,
-        controls: true,
-        slideNumber: "c",
-        pdfSeparateFragments: true,
-        pdfMaxPagesPerSlide: 1,
-        pdfPageHeightOffset: -1,
-        transition: "slide",
-        plugins: [Markdown, Highlight, Notes],
-        view: "print",
-      });
-      deck.initialize().catch((err) => console.error("Reveal init error", err));
+      (async () => {
+        const { default: Highlight } = await import(
+          "reveal.js/plugin/highlight/highlight.esm.js"
+        );
+        deck = new Reveal(revealRef.current!, {
+          hash: true,
+          width: 1920,
+          height: 1080,
+          margin: 0.01,
+          minScale: 0.4,
+          maxScale: 1,
+          progress: true,
+          history: true,
+          center: true,
+          controls: true,
+          slideNumber: "c",
+          pdfSeparateFragments: true,
+          pdfMaxPagesPerSlide: 1,
+          pdfPageHeightOffset: -1,
+          transition: "slide",
+          plugins: [Markdown, Highlight, Notes],
+          view: "print",
+        });
+        await deck.initialize();
+      })().catch((err) => console.error("Reveal init error", err));
     }
 
     // The cleanup function will be called when the component *finally* unmounts.
@@ -91,7 +95,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
     <div ref={revealRef} className="reveal">
       <div className="slides">
         <section
-          data-markdown=""
+          data-markdown
           data-separator="^\\n---\\n$"
           data-separator-vertical="^\\n--\\n$"
         >
