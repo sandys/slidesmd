@@ -11,29 +11,11 @@ interface RevealPreviewProps {
   theme: string;
 }
 
-export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
+// 'theme' prop is kept for API consistency; the PresentationEditor manages the theme link globally
+export function RevealPreview({ markdown, theme: _theme }: RevealPreviewProps) {
   const deckRef = useRef<Reveal.Api | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const themeLinkRef = useRef<HTMLLinkElement | null>(null);
-
-  // Effect for theme switching
-  useEffect(() => {
-    if (!themeLinkRef.current) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      document.head.appendChild(link);
-      themeLinkRef.current = link;
-    }
-    themeLinkRef.current.href = `/api/themes/${theme}`;
-
-    return () => {
-      // On component unmount, remove the theme link
-      if (themeLinkRef.current) {
-        themeLinkRef.current.remove();
-        themeLinkRef.current = null;
-      }
-    };
-  }, [theme]);
+  // Theme link is managed globally by PresentationEditor
 
   // Effect for one-time initialization
   useEffect(() => {

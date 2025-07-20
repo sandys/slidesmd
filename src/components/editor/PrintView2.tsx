@@ -15,6 +15,7 @@ type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 
 interface PrintView2Props {
   presentation: Presentation;
+  config?: Record<string, unknown>;
 }
 
 // By declaring the deck instance outside the component, we ensure it's a singleton
@@ -22,7 +23,7 @@ interface PrintView2Props {
 // This is the correct pattern you provided.
 let deck: Reveal.Api | null = null;
 
-export function PrintView2({ presentation }: PrintView2Props) {
+export function PrintView2({ presentation, config = {} }: PrintView2Props) {
   const themeLinkRef = useRef<HTMLLinkElement | null>(null);
   const revealRef = useRef<HTMLDivElement | null>(null);
 
@@ -59,8 +60,6 @@ export function PrintView2({ presentation }: PrintView2Props) {
         console.log("Initializing Reveal at", window.location.href);
         deck = new Reveal(revealRef.current!, {
           hash: false,
-          // Use Reveal's default slide dimensions to avoid overly small text
-          // when the deck scales slides to fit the viewport.
           progress: true,
           history: false,
           center: true,
@@ -70,6 +69,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
           pdfMaxPagesPerSlide: 1,
           pdfPageHeightOffset: -1,
           transition: "slide",
+          ...config,
           plugins: [Markdown, Highlight, Notes],
         });
         await deck.initialize();
@@ -100,7 +100,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
         deck = null;
       }
     };
-  }, []);
+  }, [config]);
 
   const allSlides = presentation.slides.map((s) => s.content).join("\n---\n");
   console.log("All slide markdown", allSlides);
