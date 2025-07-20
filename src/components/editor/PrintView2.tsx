@@ -34,7 +34,6 @@ export function PrintView2({ presentation }: PrintView2Props) {
       themeLinkRef.current = link;
     }
     const themeUrl = `/api/themes/${presentation.theme || 'black.css'}`;
-    console.log("Setting theme URL to:", themeUrl);
     themeLinkRef.current.href = themeUrl;
 
     return () => {
@@ -48,22 +47,17 @@ export function PrintView2({ presentation }: PrintView2Props) {
   useEffect(() => {
     // Only initialize if the deck hasn't been created yet.
     if (!deck && revealRef.current) {
-      console.log("PrintView2: Initializing Reveal.js for the first and only time.");
       deck = new Reveal(revealRef.current, {
         embedded: true,
         plugins: [Markdown],
         view: 'print',
       });
-
-      deck.initialize().then(() => {
-        console.log("PrintView2: Reveal.js initialized successfully.");
-      });
+      deck.initialize().catch((err) => console.error("Reveal init error", err));
     }
 
     // The cleanup function will be called when the component *finally* unmounts.
     return () => {
       if (deck) {
-        console.log("PrintView2: Cleaning up and destroying Reveal.js instance.");
         try {
           deck.destroy();
         } catch (e) {
