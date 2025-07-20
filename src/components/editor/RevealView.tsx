@@ -25,7 +25,7 @@ export function RevealView({ presentation }: RevealViewProps) {
       document.head.appendChild(link);
       themeLinkRef.current = link;
     }
-    const themeUrl = `/api/themes/${presentation.theme || "black.css"}`;
+    const themeUrl = `/themes/${presentation.theme || "black.css"}`;
     themeLinkRef.current.href = themeUrl;
 
     return () => {

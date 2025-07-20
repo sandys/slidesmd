@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
+    "generate-themes": "node scripts/generate-themes.js",
+    "dev": "npm run generate-themes && next dev --turbopack",
+    "build": "npm run generate-themes && next build",
+    "prepare": "npm run generate-themes",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest"

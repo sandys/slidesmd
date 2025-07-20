@@ -24,7 +24,7 @@ export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
       document.head.appendChild(link);
       themeLinkRef.current = link;
     }
-    themeLinkRef.current.href = `/api/themes/${theme}`;
+    themeLinkRef.current.href = `/themes/${theme}`;
 
     return () => {
       // On component unmount, remove the theme link

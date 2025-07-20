@@ -34,7 +34,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
       document.head.appendChild(link);
       themeLinkRef.current = link;
     }
-    const themeUrl = `/api/themes/${presentation.theme || "black.css"}`;
+    const themeUrl = `/themes/${presentation.theme || "black.css"}`;
     console.log("Loading theme", themeUrl);
     themeLinkRef.current.href = themeUrl;
 
