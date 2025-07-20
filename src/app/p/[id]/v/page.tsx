@@ -2,6 +2,9 @@ import { getPresentation } from "@/app/actions";
 import { ViewWrapper } from "@/components/editor/ViewWrapper";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface ViewPageProps {
   params: { id: string };
 }
