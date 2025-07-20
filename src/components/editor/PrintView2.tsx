@@ -71,12 +71,18 @@ export function PrintView2({ presentation }: PrintView2Props) {
           pdfPageHeightOffset: -1,
           transition: "slide",
           plugins: [Markdown, Highlight, Notes],
-          view: "print",
         });
         await deck.initialize();
-        console.log("Reveal initialized", deck);
+        deck.sync();
+        console.log("Reveal initialized with", deck.getTotalSlides(), "slides");
         if (revealRef.current) {
-          console.log("Reveal HTML", revealRef.current.outerHTML);
+          console.log("Reveal HTML after init", revealRef.current.outerHTML);
+          setTimeout(() => {
+            console.log(
+              "Reveal HTML after sync",
+              revealRef.current?.outerHTML
+            );
+          }, 500);
         }
       })().catch((err) => console.error("Reveal init error", err));
     }
