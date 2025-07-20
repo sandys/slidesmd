@@ -36,10 +36,17 @@ export function PresenterView({ presentation }: PresenterViewProps) {
     }
     const themeUrl = `/themes/${presentation.theme || "black.css"}`;
     console.log("Loading theme", themeUrl);
-    themeLinkRef.current.href = themeUrl;
+    const linkEl = themeLinkRef.current;
+    linkEl.onload = () => {
+      if (deck) {
+        deck.layout();
+      }
+    };
+    linkEl.href = themeUrl;
 
     return () => {
       if (themeLinkRef.current) {
+        themeLinkRef.current.onload = null;
         document.head.removeChild(themeLinkRef.current);
         // Reset the ref so the link will be recreated on the
         // second mount that occurs in React Strict Mode.

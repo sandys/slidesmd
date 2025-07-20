@@ -2,6 +2,9 @@
 import { getPresentation } from "@/app/actions";
 import { DecryptionWrapper } from "@/components/editor/DecryptionWrapper";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface ViewPageProps {
   params: {
     id: string;

@@ -3,6 +3,9 @@ import { getPresentation } from "@/app/actions";
 import { PrintWrapper } from "@/components/editor/PrintWrapper";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface PrintPageProps {
   params: {
     id: string;
