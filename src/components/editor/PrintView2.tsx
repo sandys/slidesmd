@@ -75,6 +75,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
         await deck.initialize();
         deck.sync();
         console.log("Reveal initialized with", deck.getTotalSlides(), "slides");
+        console.log("Reveal config view", deck.getConfig().view);
         if (revealRef.current) {
           console.log("Reveal HTML after init", revealRef.current.outerHTML);
           setTimeout(() => {
