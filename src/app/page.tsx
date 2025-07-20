@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { generateNewKeyString, encrypt, importKey } from "@/lib/crypto";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { toast } from "sonner";
 
 export default function Home() {
   const router = useRouter();
@@ -22,7 +23,9 @@ export default function Home() {
 
         router.push(`/p/${publicId}/e/${editKey}/h#${decryptionKey}`);
       } catch (error) {
-        alert(`Error creating presentation: ${error instanceof Error ? error.message : "Unknown error"}`);
+        toast.error(
+          `Error creating presentation: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
       }
     });
   };

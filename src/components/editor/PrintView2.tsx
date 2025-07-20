@@ -10,11 +10,13 @@ import "reveal.js/dist/reveal.css";
 import Reveal from "reveal.js";
 import Markdown from "reveal.js/plugin/markdown/markdown.esm.js";
 import Notes from "reveal.js/plugin/notes/notes.esm.js";
+import { useRevealTheme } from "@/lib/useRevealTheme";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 
 interface PrintView2Props {
   presentation: Presentation;
+  config?: Record<string, unknown>;
 }
 
 // By declaring the deck instance outside the component, we ensure it's a singleton
@@ -22,31 +24,9 @@ interface PrintView2Props {
 // This is the correct pattern you provided.
 let deck: Reveal.Api | null = null;
 
-export function PrintView2({ presentation }: PrintView2Props) {
-  const themeLinkRef = useRef<HTMLLinkElement | null>(null);
+export function PrintView2({ presentation, config = {} }: PrintView2Props) {
   const revealRef = useRef<HTMLDivElement | null>(null);
-
-  // Effect 1: Load theme
-  useEffect(() => {
-    if (!themeLinkRef.current) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      document.head.appendChild(link);
-      themeLinkRef.current = link;
-    }
-    const themeUrl = `/api/themes/${presentation.theme || "black.css"}`;
-    console.log("Loading theme", themeUrl);
-    themeLinkRef.current.href = themeUrl;
-
-    return () => {
-      if (themeLinkRef.current) {
-        document.head.removeChild(themeLinkRef.current);
-        // Reset the ref so the link will be recreated on the
-        // second mount that occurs in React Strict Mode.
-        themeLinkRef.current = null;
-      }
-    };
-  }, [presentation.theme]);
+  useRevealTheme(presentation.theme || "black.css");
 
   // Effect 2: Initialize Reveal.js
   useEffect(() => {
@@ -58,9 +38,8 @@ export function PrintView2({ presentation }: PrintView2Props) {
         );
         console.log("Initializing Reveal at", window.location.href);
         deck = new Reveal(revealRef.current!, {
+          embedded: true,
           hash: false,
-          // Use Reveal's default slide dimensions to avoid overly small text
-          // when the deck scales slides to fit the viewport.
           progress: true,
           history: false,
           center: true,
@@ -70,10 +49,12 @@ export function PrintView2({ presentation }: PrintView2Props) {
           pdfMaxPagesPerSlide: 1,
           pdfPageHeightOffset: -1,
           transition: "slide",
+          ...config,
           plugins: [Markdown, Highlight, Notes],
         });
         await deck.initialize();
         deck.sync();
+        deck.layout();
         console.log("Reveal initialized with", deck.getTotalSlides(), "slides");
         console.log("Reveal config view", deck.getConfig().view);
         if (revealRef.current) {
@@ -100,13 +81,13 @@ export function PrintView2({ presentation }: PrintView2Props) {
         deck = null;
       }
     };
-  }, []);
+  }, [config]);
 
   const allSlides = presentation.slides.map((s) => s.content).join("\n---\n");
   console.log("All slide markdown", allSlides);
 
   return (
-    <div ref={revealRef} className="reveal">
+    <div ref={revealRef} className="reveal h-[700px]">
       <div className="slides">
         <section
           data-markdown=""

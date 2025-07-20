@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface ShareDialogProps {
   isOpen: boolean;
@@ -30,7 +31,9 @@ export function ShareDialog({ isOpen, onClose, publicId, editKey }: ShareDialogP
   const editUrl = editKey ? `${baseUrl}/p/${publicId}/e/${editKey}/h#${decryptionKey}` : "";
 
   const copyToClipboard = (text: string) => {
-    void navigator.clipboard.writeText(text).then(() => alert("Link copied to clipboard!"));
+    void navigator.clipboard
+      .writeText(text)
+      .then(() => toast.success("Link copied to clipboard!"));
   };
 
   return (

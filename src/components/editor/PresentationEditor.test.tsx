@@ -4,10 +4,14 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { PresentationEditor } from "./PresentationEditor";
 import * as crypto from "@/lib/crypto";
 import * as actions from "@/app/actions";
+import { toast } from "sonner";
 
 // Mock dependencies
 vi.mock("@/lib/crypto");
 vi.mock("@/app/actions");
+vi.mock("./PrintPreview", () => ({
+  PrintPreview: () => <div data-testid="print-preview" />,
+}));
 
 const mockPresentation = {
   id: 1,
@@ -21,7 +25,8 @@ describe("PresentationEditor", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.location.hash = "#test-key";
-    window.alert = vi.fn(); // Mock window.alert
+    vi.spyOn(toast, "error").mockImplementation(() => "");
+    vi.spyOn(toast, "success").mockImplementation(() => "");
   });
 
   it("should show an error alert if encryption fails on save", async () => {
@@ -41,7 +46,7 @@ describe("PresentationEditor", () => {
 
     // Wait for the alert to be called
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(
+      expect(toast.error).toHaveBeenCalledWith(
         `Error saving: ${errorMessage}`
       );
     });
@@ -63,7 +68,7 @@ describe("PresentationEditor", () => {
     fireEvent.click(screen.getByText("Save Changes"));
 
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(
+      expect(toast.error).toHaveBeenCalledWith(
         "Cannot save. Decryption key or edit key is missing."
       );
     });

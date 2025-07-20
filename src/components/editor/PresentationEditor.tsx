@@ -7,6 +7,9 @@ import { SlideEditor } from "./SlideEditor";
 import { encrypt, importKey } from "@/lib/crypto";
 import { ShareDialog } from "./ShareDialog";
 import { ThemeSelector } from "./ThemeSelector";
+import { PrintPreview } from "./PrintPreview";
+import { toast } from "sonner";
+import { useRevealTheme } from "@/lib/useRevealTheme";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 // This now represents a decrypted slide
@@ -30,8 +33,8 @@ export function PresentationEditor({
   const [theme, setTheme] = useState(presentation.theme);
   const [isSaving, startSaveTransition] = useTransition();
   const [isShareDialogOpen, setShareDialogOpen] = useState(false);
-
   const hasEditAccess = !!editKeyFromUrl;
+  useRevealTheme(theme);
 
   const handleSlideChange = (index: number, content: string) => {
     const newSlides = [...slides];
@@ -57,7 +60,7 @@ export function PresentationEditor({
       try {
         const keyString = window.location.hash.substring(1);
         if (!keyString || !editKeyFromUrl) {
-            alert("Cannot save. Decryption key or edit key is missing.");
+            toast.error("Cannot save. Decryption key or edit key is missing.");
             return;
         }
         const key = await importKey(keyString);
@@ -70,10 +73,17 @@ export function PresentationEditor({
             }))
         );
 
-        await updatePresentation(presentation.publicId, editKeyFromUrl, encryptedSlides, theme);
-        alert("Presentation saved!");
+        await updatePresentation(
+          presentation.publicId,
+          editKeyFromUrl,
+          encryptedSlides,
+          theme
+        );
+        toast.success("Presentation saved!");
       } catch (error) {
-        alert(`Error saving: ${error instanceof Error ? error.message : "Unknown error"}`);
+        toast.error(
+          `Error saving: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
       }
     });
   };
@@ -115,6 +125,9 @@ export function PresentationEditor({
         onClose={() => setShareDialogOpen(false)}
         publicId={presentation.publicId}
         editKey={editKeyFromUrl}
+      />
+      <PrintPreview
+        presentation={{ ...presentation, slides }}
       />
     </div>
   );
