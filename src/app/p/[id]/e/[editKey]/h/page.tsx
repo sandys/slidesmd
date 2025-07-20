@@ -10,6 +10,7 @@ interface EditPageProps {
 }
 
 export default async function EditPage({ params: paramsPromise }: EditPageProps) {
+  // eslint-disable-next-line @typescript-eslint/await-thenable
   const params = await paramsPromise;
   const presentation = await getPresentation(params.id);
 
