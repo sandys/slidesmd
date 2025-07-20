@@ -41,6 +41,9 @@ export function PrintView2({ presentation }: PrintView2Props) {
     return () => {
       if (themeLinkRef.current) {
         document.head.removeChild(themeLinkRef.current);
+        // Reset the ref so the link will be recreated on the
+        // second mount that occurs in React Strict Mode.
+        themeLinkRef.current = null;
       }
     };
   }, [presentation.theme]);
@@ -56,11 +59,8 @@ export function PrintView2({ presentation }: PrintView2Props) {
         console.log("Initializing Reveal at", window.location.href);
         deck = new Reveal(revealRef.current!, {
           hash: false,
-          width: 1920,
-          height: 1080,
-          margin: 0.01,
-          minScale: 0.4,
-          maxScale: 1,
+          // Use Reveal's default slide dimensions to avoid overly small text
+          // when the deck scales slides to fit the viewport.
           progress: true,
           history: false,
           center: true,
