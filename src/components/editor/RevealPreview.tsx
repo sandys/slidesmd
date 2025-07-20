@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Reveal from "reveal.js";
-import Markdown from "reveal.js/plugin/markdown/markdown";
+import Markdown from "reveal.js/plugin/markdown/markdown.esm.js";
 import "reveal.js/dist/reveal.css";
 // Note: The theme CSS is now loaded dynamically below
 
@@ -74,9 +74,7 @@ export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
     if (slidesContainer) {
       slidesContainer.innerHTML = `
         <section data-markdown>
-          <textarea data-template readonly>
-            ${newMarkdown}
-          </textarea>
+          <script type="text/template">${newMarkdown}</script>
         </section>
       `;
       deck.sync();
