@@ -10,6 +10,7 @@ import "reveal.js/dist/reveal.css";
 import Reveal from "reveal.js";
 import Markdown from "reveal.js/plugin/markdown/markdown.esm.js";
 import Notes from "reveal.js/plugin/notes/notes.esm.js";
+import { useRevealTheme } from "@/lib/useRevealTheme";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 
@@ -24,30 +25,8 @@ interface PrintView2Props {
 let deck: Reveal.Api | null = null;
 
 export function PrintView2({ presentation, config = {} }: PrintView2Props) {
-  const themeLinkRef = useRef<HTMLLinkElement | null>(null);
   const revealRef = useRef<HTMLDivElement | null>(null);
-
-  // Effect 1: Load theme
-  useEffect(() => {
-    if (!themeLinkRef.current) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      document.head.appendChild(link);
-      themeLinkRef.current = link;
-    }
-    const themeUrl = `/api/themes/${presentation.theme || "black.css"}`;
-    console.log("Loading theme", themeUrl);
-    themeLinkRef.current.href = themeUrl;
-
-    return () => {
-      if (themeLinkRef.current) {
-        document.head.removeChild(themeLinkRef.current);
-        // Reset the ref so the link will be recreated on the
-        // second mount that occurs in React Strict Mode.
-        themeLinkRef.current = null;
-      }
-    };
-  }, [presentation.theme]);
+  useRevealTheme(presentation.theme || "black.css");
 
   // Effect 2: Initialize Reveal.js
   useEffect(() => {
@@ -59,6 +38,7 @@ export function PrintView2({ presentation, config = {} }: PrintView2Props) {
         );
         console.log("Initializing Reveal at", window.location.href);
         deck = new Reveal(revealRef.current!, {
+          embedded: true,
           hash: false,
           progress: true,
           history: false,

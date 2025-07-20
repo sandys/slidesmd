@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { getPresentation, updatePresentation } from "@/app/actions";
 import { SlideEditor } from "./SlideEditor";
@@ -9,6 +9,7 @@ import { ShareDialog } from "./ShareDialog";
 import { ThemeSelector } from "./ThemeSelector";
 import { PrintPreview } from "./PrintPreview";
 import { toast } from "sonner";
+import { useRevealTheme } from "@/lib/useRevealTheme";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 // This now represents a decrypted slide
@@ -32,26 +33,8 @@ export function PresentationEditor({
   const [theme, setTheme] = useState(presentation.theme);
   const [isSaving, startSaveTransition] = useTransition();
   const [isShareDialogOpen, setShareDialogOpen] = useState(false);
-  const themeLinkRef = useRef<HTMLLinkElement | null>(null);
-
   const hasEditAccess = !!editKeyFromUrl;
-
-  useEffect(() => {
-    if (!themeLinkRef.current) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      document.head.appendChild(link);
-      themeLinkRef.current = link;
-    }
-    themeLinkRef.current.href = `/api/themes/${theme}`;
-
-    return () => {
-      if (themeLinkRef.current) {
-        document.head.removeChild(themeLinkRef.current);
-        themeLinkRef.current = null;
-      }
-    };
-  }, [theme]);
+  useRevealTheme(theme);
 
   const handleSlideChange = (index: number, content: string) => {
     const newSlides = [...slides];
