@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import type { getPresentation } from "@/app/actions";
 import { decrypt, importKey } from "@/lib/crypto";
-import { PrintView2 } from "./PrintView2";
+import { PresenterView } from "./PresenterView";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 
@@ -54,5 +54,5 @@ export function PrintWrapper({ presentation }: PrintWrapperProps) {
 
   const decryptedPresentation = { ...presentation, slides: decryptedSlides };
 
-  return <PrintView2 presentation={decryptedPresentation} />;
+  return <PresenterView presentation={decryptedPresentation} />;
 }

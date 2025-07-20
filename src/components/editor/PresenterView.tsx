@@ -1,4 +1,4 @@
-// src/components/editor/PrintView2.tsx
+// src/components/editor/PresenterView.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -13,7 +13,7 @@ import Notes from "reveal.js/plugin/notes/notes.esm.js";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 
-interface PrintView2Props {
+interface PresenterViewProps {
   presentation: Presentation;
 }
 
@@ -22,7 +22,7 @@ interface PrintView2Props {
 // This is the correct pattern you provided.
 let deck: Reveal.Api | null = null;
 
-export function PrintView2({ presentation }: PrintView2Props) {
+export function PresenterView({ presentation }: PresenterViewProps) {
   const themeLinkRef = useRef<HTMLLinkElement | null>(null);
   const revealRef = useRef<HTMLDivElement | null>(null);
 
@@ -94,7 +94,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
         try {
           deck.destroy();
         } catch (e) {
-          console.error("PrintView2: Error during Reveal.js destroy:", e);
+          console.error("PresenterView: Error during Reveal.js destroy:", e);
         }
         // Reset the singleton instance so it can be re-initialized if the page is ever revisited.
         deck = null;
