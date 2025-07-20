@@ -13,7 +13,6 @@ export default async function PrintPage({ params: paramsPromise }: PrintPageProp
   // Await the params promise as required by Next.js 15
   // eslint-disable-next-line @typescript-eslint/await-thenable
   const params = await paramsPromise;
-  console.log("Print page server params:", params);
   const presentation = await getPresentation(params.id);
 
   if (!presentation) {

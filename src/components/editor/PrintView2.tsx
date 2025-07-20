@@ -69,14 +69,20 @@ export function PrintView2({ presentation }: PrintView2Props) {
     };
   }, []);
 
+  const allSlides = presentation.slides
+    .map((s) => s.content)
+    .join("\n---\n");
+
   return (
     <div ref={revealRef} className="reveal">
       <div className="slides">
-        {presentation.slides.map((slide) => (
-          <section key={slide.id} data-markdown="">
-            <script type="text/template">{slide.content}</script>
-          </section>
-        ))}
+        <section
+          data-markdown=""
+          data-separator="^\\n---\\n$"
+          data-separator-vertical="^\\n--\\n$"
+        >
+          <script type="text/template">{allSlides}</script>
+        </section>
       </div>
     </div>
   );
