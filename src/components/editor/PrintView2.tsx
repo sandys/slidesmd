@@ -55,6 +55,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
         );
         console.log("Initializing Reveal at", window.location.href);
         deck = new Reveal(revealRef.current!, {
+          view: "print",
           hash: false,
           width: 1920,
           height: 1080,
