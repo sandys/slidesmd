@@ -39,26 +39,31 @@ export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
     };
   }, [theme]);
 
-  // Initialize reveal once and re-sync when markdown changes
+  // Reinitialize reveal whenever the markdown changes
   useEffect(() => {
-    if (!revealRef.current) return;
+    const container = revealRef.current;
+    if (!container) return;
 
-    if (!deckRef.current) {
-      const deck = new Reveal(revealRef.current, {
-        embedded: true,
-        plugins: [Markdown],
-        enableFocus: false,
-      });
-
-      void deck.initialize().then(() => {
-        deckRef.current = deck;
-        deck.sync();
-        void deck.slide(0, 0);
-      });
-    } else {
-      deckRef.current.sync();
-      void deckRef.current.slide(0, 0);
+    if (deckRef.current) {
+      try {
+        deckRef.current.destroy();
+      } catch (e) {
+        console.warn("Reveal.js destroy failed", e);
+      }
+      deckRef.current = null;
     }
+
+    const deck = new Reveal(container, {
+      embedded: true,
+      plugins: [Markdown],
+      enableFocus: false,
+    });
+
+    void deck.initialize().then(() => {
+      deckRef.current = deck;
+      deck.sync();
+      void deck.slide(0, 0);
+    });
 
     return () => {
       if (deckRef.current) {
@@ -75,11 +80,15 @@ export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
   return (
     <div ref={revealRef} className="reveal h-full w-full">
       <div className="slides">
-        <section data-markdown>
+        <section
+          data-markdown=""
+          data-separator="^\\n---\\n$"
+          data-separator-vertical="^\\n--\\n$"
+        >
           <script
             type="text/template"
             dangerouslySetInnerHTML={{ __html: markdown }}
-          />
+          ></script>
         </section>
       </div>
     </div>
