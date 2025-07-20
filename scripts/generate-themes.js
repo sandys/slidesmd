@@ -25,6 +25,8 @@ async function generateThemes() {
   console.log('Generated themes:', cssFiles);
 }
 
+module.exports = { generateThemes };
+
 if (require.main === module) {
   generateThemes().catch((err) => {
     console.error('Failed to generate themes', err);
