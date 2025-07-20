@@ -60,8 +60,8 @@ export function RevealView({ presentation }: RevealViewProps) {
     <div ref={revealRef} className="reveal h-full w-full">
       <div className="slides">
         {presentation.slides.map((slide) => (
-          <section key={slide.id} data-markdown>
-            <textarea data-template defaultValue={slide.content}></textarea>
+          <section key={slide.id} data-markdown="">
+            <script type="text/template">{slide.content}</script>
           </section>
         ))}
       </div>
