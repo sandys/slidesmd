@@ -1,11 +1,9 @@
-// src/app/p/[id]/h/page.tsx
 import { getPresentation } from "@/app/actions";
-import { DecryptionWrapper } from "@/components/editor/DecryptionWrapper";
+import { ViewWrapper } from "@/components/editor/ViewWrapper";
+import { notFound } from "next/navigation";
 
 interface ViewPageProps {
-  params: {
-    id: string;
-  };
+  params: { id: string };
 }
 
 export default async function ViewPage({ params: paramsPromise }: ViewPageProps) {
@@ -14,8 +12,9 @@ export default async function ViewPage({ params: paramsPromise }: ViewPageProps)
   const presentation = await getPresentation(params.id);
 
   if (!presentation) {
-    return <div>Presentation not found</div>;
+    return notFound();
   }
 
-  return <DecryptionWrapper presentation={presentation} />;
+  return <ViewWrapper presentation={presentation} />;
 }
+

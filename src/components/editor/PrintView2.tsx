@@ -9,6 +9,7 @@ import "reveal.js/dist/reveal.css";
 
 import Reveal from "reveal.js";
 import Markdown from "reveal.js/plugin/markdown/markdown.esm.js";
+import Notes from "reveal.js/plugin/notes/notes.esm.js";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 
@@ -33,8 +34,8 @@ export function PrintView2({ presentation }: PrintView2Props) {
       document.head.appendChild(link);
       themeLinkRef.current = link;
     }
-    const themeUrl = `/api/themes/${presentation.theme || 'black.css'}`;
-    console.log("Setting theme URL to:", themeUrl);
+    const themeUrl = `/api/themes/${presentation.theme || "black.css"}`;
+    console.log("Loading theme", themeUrl);
     themeLinkRef.current.href = themeUrl;
 
     return () => {
@@ -48,22 +49,48 @@ export function PrintView2({ presentation }: PrintView2Props) {
   useEffect(() => {
     // Only initialize if the deck hasn't been created yet.
     if (!deck && revealRef.current) {
-      console.log("PrintView2: Initializing Reveal.js for the first and only time.");
-      deck = new Reveal(revealRef.current, {
-        embedded: true,
-        plugins: [Markdown],
-        view: 'print',
-      });
-
-      deck.initialize().then(() => {
-        console.log("PrintView2: Reveal.js initialized successfully.");
-      });
+      (async () => {
+        const { default: Highlight } = await import(
+          "reveal.js/plugin/highlight/highlight.esm.js"
+        );
+        console.log("Initializing Reveal at", window.location.href);
+        deck = new Reveal(revealRef.current!, {
+          hash: false,
+          width: 1920,
+          height: 1080,
+          margin: 0.01,
+          minScale: 0.4,
+          maxScale: 1,
+          progress: true,
+          history: false,
+          center: true,
+          controls: true,
+          slideNumber: "c",
+          pdfSeparateFragments: true,
+          pdfMaxPagesPerSlide: 1,
+          pdfPageHeightOffset: -1,
+          transition: "slide",
+          plugins: [Markdown, Highlight, Notes],
+        });
+        await deck.initialize();
+        deck.sync();
+        console.log("Reveal initialized with", deck.getTotalSlides(), "slides");
+        console.log("Reveal config view", deck.getConfig().view);
+        if (revealRef.current) {
+          console.log("Reveal HTML after init", revealRef.current.outerHTML);
+          setTimeout(() => {
+            console.log(
+              "Reveal HTML after sync",
+              revealRef.current?.outerHTML
+            );
+          }, 500);
+        }
+      })().catch((err) => console.error("Reveal init error", err));
     }
 
     // The cleanup function will be called when the component *finally* unmounts.
     return () => {
       if (deck) {
-        console.log("PrintView2: Cleaning up and destroying Reveal.js instance.");
         try {
           deck.destroy();
         } catch (e) {
@@ -75,14 +102,22 @@ export function PrintView2({ presentation }: PrintView2Props) {
     };
   }, []);
 
+  const allSlides = presentation.slides.map((s) => s.content).join("\n---\n");
+  console.log("All slide markdown", allSlides);
+
   return (
     <div ref={revealRef} className="reveal">
       <div className="slides">
-        {presentation.slides.map((slide) => (
-          <section key={slide.id} data-markdown>
-            <textarea data-template defaultValue={slide.content}></textarea>
-          </section>
-        ))}
+        <section
+          data-markdown=""
+          data-separator="^\\n---\\n$"
+          data-separator-vertical="^\\n--\\n$"
+        >
+          <script
+            type="text/template"
+            dangerouslySetInnerHTML={{ __html: allSlides }}
+          ></script>
+        </section>
       </div>
     </div>
   );

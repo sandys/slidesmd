@@ -11,7 +11,6 @@ export function ThemeSelector({
   selectedTheme,
   onThemeChange,
 }: ThemeSelectorProps) {
-  console.log("🎨 [ThemeSelector] Themes received in component:", themes);
   return (
     <div className="flex items-center space-x-2">
       <label htmlFor="theme-selector">Theme:</label>

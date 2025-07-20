@@ -1,18 +1,17 @@
-// src/components/editor/PrintWrapper.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import type { getPresentation } from "@/app/actions";
 import { decrypt, importKey } from "@/lib/crypto";
-import { PrintView2 } from "./PrintView2";
+import { RevealView } from "./RevealView";
 
-type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
+export type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 
-interface PrintWrapperProps {
+interface ViewWrapperProps {
   presentation: Presentation;
 }
 
-export function PrintWrapper({ presentation }: PrintWrapperProps) {
+export function ViewWrapper({ presentation }: ViewWrapperProps) {
   const [decryptedSlides, setDecryptedSlides] = useState<Presentation["slides"] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +19,6 @@ export function PrintWrapper({ presentation }: PrintWrapperProps) {
     const decryptSlides = async () => {
       try {
         const keyString = window.location.hash.substring(1);
-        console.log("PrintWrapper hash", window.location.hash);
         if (!keyString) {
           setError("No decryption key found in URL.");
           return;
@@ -33,10 +31,9 @@ export function PrintWrapper({ presentation }: PrintWrapperProps) {
             content: await decrypt(slide.content, key),
           }))
         );
-        console.log("Decrypted", slides.length, "slides");
         setDecryptedSlides(slides);
       } catch (e) {
-        console.error("Failed to decrypt presentation for printing:", e);
+        console.error("Failed to decrypt presentation:", e);
         setError("Failed to decrypt slides. The key may be invalid or the content may be corrupt.");
       }
     };
@@ -49,10 +46,11 @@ export function PrintWrapper({ presentation }: PrintWrapperProps) {
   }
 
   if (!decryptedSlides) {
-    return <div className="p-4">Decrypting and preparing slides for printing...</div>;
+    return <div className="p-4">Decrypting presentation...</div>;
   }
 
   const decryptedPresentation = { ...presentation, slides: decryptedSlides };
 
-  return <PrintView2 presentation={decryptedPresentation} />;
+  return <RevealView presentation={decryptedPresentation} />;
 }
+
