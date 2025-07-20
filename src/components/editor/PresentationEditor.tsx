@@ -96,7 +96,7 @@ export function PresentationEditor({
   const handlePrint = () => {
     const key = window.location.hash;
     // Open a dedicated print page, passing the key in the hash.
-    const printUrl = `/print/p/${presentation.publicId}/h${key}`;
+    const printUrl = `/present/p/${presentation.publicId}/h${key}`;
     window.open(printUrl, '_blank');
   };
 

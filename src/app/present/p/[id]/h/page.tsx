@@ -1,4 +1,4 @@
-// src/app/print/p/[id]/h/page.tsx
+// src/app/present/p/[id]/h/page.tsx
 import { getPresentation } from "@/app/actions";
 import { PrintWrapper } from "@/components/editor/PrintWrapper";
 import { notFound } from "next/navigation";
