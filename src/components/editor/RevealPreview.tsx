@@ -77,6 +77,16 @@ export function RevealPreview({ markdown, theme }: RevealPreviewProps) {
     };
   }, [markdown]);
 
+  // Resize slides when the container size changes
+  useEffect(() => {
+    if (typeof ResizeObserver === "undefined") return;
+    const el = revealRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => deckRef.current?.layout());
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div ref={revealRef} className="reveal h-full w-full">
       <div className="slides">

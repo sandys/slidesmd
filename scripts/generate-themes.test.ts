@@ -31,8 +31,16 @@ describe("generateThemes", () => {
       .sort();
 
     const destDir = path.join(tmpDir, "public", "themes");
-    const destFiles = (await fs.readdir(destDir)).sort();
+    const destFiles = (await fs.readdir(destDir))
+      .filter((f) => f.endsWith(".css"))
+      .sort();
     expect(destFiles).toEqual(expected);
+
+    const fontDir = path.join(themeDir, "fonts");
+    const destFontDir = path.join(destDir, "fonts");
+    const fonts = (await fs.readdir(fontDir)).sort();
+    const destFonts = (await fs.readdir(destFontDir)).sort();
+    expect(destFonts).toEqual(fonts);
 
     const themesFile = await fs.readFile(path.join(tmpDir, "src", "lib", "themes.ts"), "utf8");
     const match = themesFile.match(/export const themes = (.+);/s);
