@@ -54,6 +54,7 @@ export function PrintView2({ presentation, config = {} }: PrintView2Props) {
         });
         await deck.initialize();
         deck.sync();
+        deck.layout();
         console.log("Reveal initialized with", deck.getTotalSlides(), "slides");
         console.log("Reveal config view", deck.getConfig().view);
         if (revealRef.current) {
