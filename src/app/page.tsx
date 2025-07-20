@@ -2,16 +2,21 @@
 
 import { createPresentation } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { generateNewKeyString, encrypt, importKey } from "@/lib/crypto";
+import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 export default function Home() {
   const router = useRouter();
   const [isCreating, startCreateTransition] = useTransition();
+  const [status, setStatus] = useState<string | null>(null);
+  const [statusType, setStatusType] = useState<"error" | null>(null);
 
   const handleCreate = () => {
     startCreateTransition(async () => {
+      setStatus(null);
       try {
         const decryptionKey = await generateNewKeyString();
         const key = await importKey(decryptionKey);
@@ -22,16 +27,34 @@ export default function Home() {
 
         router.push(`/p/${publicId}/e/${editKey}/h#${decryptionKey}`);
       } catch (error) {
-        alert(`Error creating presentation: ${error instanceof Error ? error.message : "Unknown error"}`);
+        setStatus(
+          `Error creating presentation: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+        setStatusType("error");
       }
     });
   };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <Button onClick={handleCreate} disabled={isCreating}>
-        {isCreating ? "Creating..." : "Create New Presentation"}
-      </Button>
+      <div className="flex flex-col items-center gap-2">
+        <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
+          {isCreating && <Spinner />}
+          Create New Presentation
+        </Button>
+        {status && (
+          <p
+            className={cn(
+              "text-sm",
+              statusType === "error" ? "text-red-600" : "text-green-600"
+            )}
+          >
+            {status}
+          </p>
+        )}
+      </div>
     </main>
   );
 }

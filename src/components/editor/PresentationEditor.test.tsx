@@ -21,10 +21,9 @@ describe("PresentationEditor", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.location.hash = "#test-key";
-    window.alert = vi.fn(); // Mock window.alert
   });
 
-  it("should show an error alert if encryption fails on save", async () => {
+  it("should show an error message if encryption fails on save", async () => {
     const errorMessage = "Test encryption error";
     vi.mocked(crypto.importKey).mockResolvedValue({} as CryptoKey);
     vi.mocked(crypto.encrypt).mockRejectedValue(new Error(errorMessage));
@@ -39,11 +38,11 @@ describe("PresentationEditor", () => {
     // Click the save button
     fireEvent.click(screen.getByText("Save Changes"));
 
-    // Wait for the alert to be called
+    // Wait for the error message to appear
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(
-        `Error saving: ${errorMessage}`
-      );
+      expect(
+        screen.getByText(`Error saving: ${errorMessage}`)
+      ).toBeInTheDocument();
     });
 
     // Ensure updatePresentation was not called
@@ -63,9 +62,9 @@ describe("PresentationEditor", () => {
     fireEvent.click(screen.getByText("Save Changes"));
 
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(
-        "Cannot save. Decryption key or edit key is missing."
-      );
+      expect(
+        screen.getByText("Cannot save. Decryption key or edit key is missing.")
+      ).toBeInTheDocument();
     });
   });
 });

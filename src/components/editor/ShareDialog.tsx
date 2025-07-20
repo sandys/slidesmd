@@ -15,6 +15,7 @@ interface ShareDialogProps {
 
 export function ShareDialog({ isOpen, onClose, publicId, editKey }: ShareDialogProps) {
   const [decryptionKey, setDecryptionKey] = useState("");
+  const [copied, setCopied] = useState<"edit" | "view" | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -30,8 +31,11 @@ export function ShareDialog({ isOpen, onClose, publicId, editKey }: ShareDialogP
   const viewUrl = `${baseUrl}/p/${publicId}/h#${decryptionKey}`;
   const editUrl = editKey ? `${baseUrl}/p/${publicId}/e/${editKey}/h#${decryptionKey}` : "";
 
-  const copyToClipboard = (text: string) => {
-    void navigator.clipboard.writeText(text).then(() => alert("Link copied to clipboard!"));
+  const copyToClipboard = (text: string, type: "edit" | "view") => {
+    void navigator.clipboard.writeText(text).then(() => {
+      setCopied(type);
+      setTimeout(() => setCopied(null), 1500);
+    });
   };
 
   return (
@@ -43,18 +47,20 @@ export function ShareDialog({ isOpen, onClose, publicId, editKey }: ShareDialogP
           {editKey && (
             <div>
               <Label className="block text-sm font-medium text-gray-700">Your Private Edit Link (Keep this safe!)</Label>
-              <div className="flex space-x-2 mt-1">
+              <div className="flex items-center space-x-2 mt-1">
                 <Input type="text" readOnly value={editUrl} />
-                <Button onClick={() => copyToClipboard(editUrl)}>Copy</Button>
+                <Button onClick={() => copyToClipboard(editUrl, "edit")}>Copy</Button>
+                {copied === "edit" && <span className="text-sm text-green-600">Copied!</span>}
               </div>
             </div>
           )}
 
           <div>
             <Label className="block text-sm font-medium text-gray-700">Read-Only Link (For sharing)</Label>
-            <div className="flex space-x-2 mt-1">
+            <div className="flex items-center space-x-2 mt-1">
               <Input type="text" readOnly value={viewUrl} />
-              <Button onClick={() => copyToClipboard(viewUrl)}>Copy</Button>
+              <Button onClick={() => copyToClipboard(viewUrl, "view")}>Copy</Button>
+              {copied === "view" && <span className="text-sm text-green-600">Copied!</span>}
             </div>
           </div>
         </div>
