@@ -12,9 +12,13 @@ interface SlideEditorProps {
   content: string;
   onContentChange: (newContent: string) => void;
   theme: string;
+  /**
+   * When false, the textarea should be read-only and changes ignored.
+   */
+  editable?: boolean;
 }
 
-export function SlideEditor({ content, onContentChange, theme }: SlideEditorProps) {
+export function SlideEditor({ content, onContentChange, theme, editable = true }: SlideEditorProps) {
   return (
     <div className="border rounded-lg p-4 space-y-4">
       <ResizablePanelGroup
@@ -26,8 +30,10 @@ export function SlideEditor({ content, onContentChange, theme }: SlideEditorProp
           <div className="p-4 h-full">
             <Textarea
               value={content}
-              onChange={(e) => onContentChange(e.target.value)}
+              onChange={editable ? (e) => onContentChange(e.target.value) : undefined}
               className="w-full h-full resize-none"
+              readOnly={!editable}
+              disabled={!editable}
             />
           </div>
         </ResizablePanel>

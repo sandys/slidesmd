@@ -142,6 +142,7 @@ export function PresentationEditor({
           content={slide.content}
           onContentChange={(newContent) => handleSlideChange(index, newContent)}
           theme={theme}
+          editable={hasEditAccess}
         />
       ))}
       <ShareDialog
