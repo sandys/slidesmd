@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ShareDialogProps {
   isOpen: boolean;
@@ -41,7 +42,7 @@ export function ShareDialog({ isOpen, onClose, publicId, editKey }: ShareDialogP
         <div className="space-y-4">
           {editKey && (
             <div>
-              <label className="block text-sm font-medium text-gray-700">Your Private Edit Link (Keep this safe!)</label>
+              <Label className="block text-sm font-medium text-gray-700">Your Private Edit Link (Keep this safe!)</Label>
               <div className="flex space-x-2 mt-1">
                 <Input type="text" readOnly value={editUrl} />
                 <Button onClick={() => copyToClipboard(editUrl)}>Copy</Button>
@@ -50,7 +51,7 @@ export function ShareDialog({ isOpen, onClose, publicId, editKey }: ShareDialogP
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Read-Only Link (For sharing)</label>
+            <Label className="block text-sm font-medium text-gray-700">Read-Only Link (For sharing)</Label>
             <div className="flex space-x-2 mt-1">
               <Input type="text" readOnly value={viewUrl} />
               <Button onClick={() => copyToClipboard(viewUrl)}>Copy</Button>
@@ -65,3 +66,4 @@ export function ShareDialog({ isOpen, onClose, publicId, editKey }: ShareDialogP
     </div>
   );
 }
+

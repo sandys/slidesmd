@@ -13,22 +13,28 @@ describe("ThemeSelector", () => {
     render(<ThemeSelector selectedTheme="black.css" onThemeChange={() => {}} />);
     const select = screen.getByRole("combobox");
     expect(select).toBeInTheDocument();
-    expect(screen.getByText("Black")).toBeInTheDocument();
-    expect(screen.getByText("White")).toBeInTheDocument();
-    expect(screen.getByText("League")).toBeInTheDocument();
+    fireEvent.click(select);
+    const options = screen.getAllByRole("option");
+    const texts = options.map((o) => o.textContent);
+    expect(texts).toEqual(expect.arrayContaining(["Black", "White", "League"]));
   });
 
   it("should call onThemeChange when a new theme is selected", () => {
     const onThemeChange = vi.fn();
-    render(<ThemeSelector selectedTheme="black.css" onThemeChange={onThemeChange} />);
+    render(
+      <ThemeSelector selectedTheme="black.css" onThemeChange={onThemeChange} />,
+    );
     const select = screen.getByRole("combobox");
-    fireEvent.change(select, { target: { value: "white.css" } });
+    fireEvent.click(select);
+    fireEvent.click(screen.getByText("White"));
     expect(onThemeChange).toHaveBeenCalledWith("white.css");
   });
 
   it("should display the correct selected theme", () => {
     render(<ThemeSelector selectedTheme="league.css" onThemeChange={() => {}} />);
     const select = screen.getByRole("combobox");
-    expect(select).toHaveValue("league.css");
+    expect(select).toHaveTextContent("League");
   });
 });
+
+
