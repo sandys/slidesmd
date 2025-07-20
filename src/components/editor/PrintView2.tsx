@@ -53,7 +53,7 @@ export function PrintView2({ presentation }: PrintView2Props) {
           "reveal.js/plugin/highlight/highlight.esm.js"
         );
         deck = new Reveal(revealRef.current!, {
-          hash: true,
+          hash: false,
           width: 1920,
           height: 1080,
           margin: 0.01,
@@ -95,11 +95,14 @@ export function PrintView2({ presentation }: PrintView2Props) {
     <div ref={revealRef} className="reveal">
       <div className="slides">
         <section
-          data-markdown
+          data-markdown=""
           data-separator="^\\n---\\n$"
           data-separator-vertical="^\\n--\\n$"
         >
-          <script type="text/template">{allSlides}</script>
+          <script
+            type="text/template"
+            dangerouslySetInnerHTML={{ __html: allSlides }}
+          />
         </section>
       </div>
     </div>
