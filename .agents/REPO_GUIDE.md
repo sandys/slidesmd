@@ -26,8 +26,8 @@ ciphertext it can never read. Authoring dialect reference: `docs/authoring.md`.
 - Routes: `/` create → `/p/[id]/e/[editKey]/h` editor · `/p/[id]/h` read-only editor · `/p/[id]/v` viewer · `/present/p/[id]/h` presenter (`?print-pdf` before the `#key` = PDF export). The `h` path segment is a literal.
 - `src/app/actions.ts` server actions are the whole data layer; editKey verified against a bcrypt hash; a deck is ONE encrypted slide row (legacy multi-row decks join client-side with `\n---\n` and collapse to one row on next save).
 - Crypto: `src/lib/crypto.ts` — AES-GCM, stored as base64(IV‖ciphertext); URL-safe base64 key export.
-- Markdown pipeline: `src/lib/markdown.ts` — front matter parsing, `:::` container expansion, separator constants shared by every surface.
-- `src/components/editor/RevealDeck.tsx` is the ONLY reveal renderer (modes: preview/view/present). `DecryptionWrapper` (mode prop) decrypts and routes to `PresentationEditor` or `RevealDeck`.
+- Markdown pipeline: `src/lib/markdown.ts` — front matter parsing, `:::` container expansion, separator constants shared by every surface, and `slideRangeForIndices` (slide indices → source char range; powers the editor's scroll-sync highlight via `MarkdownPane`, a metrics-matched backdrop behind the textarea — its font/padding/wrap classes must stay identical in both layers).
+- `src/components/editor/RevealDeck.tsx` is the ONLY reveal renderer (modes: preview/view/present/slideshow — slideshow is the editor's Present button: an embedded fullscreen overlay of the live doc; `requestFullscreen` must run inside the click's transient-activation window, which is why it is an in-page overlay and not a new tab). `DecryptionWrapper` (mode prop) decrypts and routes to `PresentationEditor` or `RevealDeck`.
 - Post-init enhancers: `src/lib/chart-blocks.ts` (```chart fences → SVG) and `src/lib/fx.ts` (`fx-countup`, `fx-enter-*`, `fx-kenburns`).
 - `src/vendor/bento/` — MIT code vendored from nyblnet/bento (charts-lite, anim engine, palette); eslint-ignored; tracked in `THIRD_PARTY_NOTICES.md`.
 - Layout kit: `src/styles/slides-kit.css` (driven by reveal `--r-*` vars, tunable via `--kit-*` hooks); custom themes in `src/themes/*.css` (bento theme embeds OFL fonts as data URIs, `@import`s white.css as substrate).
@@ -50,6 +50,7 @@ ciphertext it can never read. Authoring dialect reference: `docs/authoring.md`.
 - reveal.js ships no types; devDep `@types/reveal.js` also covers the plugin ESM import paths.
 - One `Note:` block per slide (the plugin only splits on exactly 2 parts); chart fences must not carry `[...]` line-number ranges (the line-number table breaks JSON parsing).
 - jsdom cannot catch reveal rendering bugs (regex/CSS issues pass unit tests) — run the `smoke-testing-decks-in-browser` skill for deck-rendering changes.
+- Never run `npm run build` while `next dev` is running — they share `.next/` and the dev server starts returning 500s; stop dev, build, restart.
 
 ## Working rules for agents
 - Immediately before **every commit**, and right after any substantial change

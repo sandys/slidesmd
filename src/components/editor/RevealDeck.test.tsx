@@ -90,6 +90,34 @@ describe("RevealDeck", () => {
     await waitFor(() => expect(deckMock.initialize).toHaveBeenCalled());
   });
 
+  it("notifies onSlideChanged on init and on slidechanged events", async () => {
+    const onSlideChanged = vi.fn();
+    render(<RevealDeck doc={"# A\n---\n# B"} mode="preview" onSlideChanged={onSlideChanged} />);
+    await waitFor(() => expect(onSlideChanged).toHaveBeenCalledWith({ h: 0, v: 0 }));
+
+    const slidechanged = deckMock.on.mock.calls.find(([type]) => type === "slidechanged");
+    expect(slidechanged).toBeDefined();
+    deckMock.getIndices.mockReturnValue({ h: 1, v: 0 });
+    (slidechanged![1] as () => void)();
+    expect(onSlideChanged).toHaveBeenLastCalledWith({ h: 1, v: 0 });
+  });
+
+  it("configures slideshow mode as an embedded deck with global keyboard", async () => {
+    const Reveal = (await import("reveal.js")).default as unknown as ReturnType<typeof vi.fn>;
+    render(<RevealDeck doc={"# A"} mode="slideshow" />);
+    await waitFor(() => expect(Reveal).toHaveBeenCalled());
+    const config = Reveal.mock.calls[0][1] as {
+      embedded: boolean;
+      keyboardCondition: null;
+      slideNumber: string;
+      controls: boolean;
+    };
+    expect(config.embedded).toBe(true);
+    expect(config.keyboardCondition).toBeNull();
+    expect(config.slideNumber).toBe("c");
+    expect(config.controls).toBe(true);
+  });
+
   it("applies front matter reveal overrides", async () => {
     const Reveal = (await import("reveal.js")).default as unknown as ReturnType<typeof vi.fn>;
     render(

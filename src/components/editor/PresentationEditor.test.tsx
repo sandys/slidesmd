@@ -10,7 +10,22 @@ import * as actions from "@/app/actions";
 vi.mock("@/lib/crypto");
 vi.mock("@/app/actions");
 vi.mock("./RevealDeck", () => ({
-  RevealDeck: () => <div data-testid="reveal-deck" />,
+  RevealDeck: ({
+    mode,
+    onSlideChanged,
+  }: {
+    mode: string;
+    onSlideChanged?: (i: { h: number; v: number }) => void;
+  }) => (
+    <div data-testid="reveal-deck" data-mode={mode}>
+      {onSlideChanged && (
+        <button
+          data-testid={`goto-second-${mode}`}
+          onClick={() => onSlideChanged({ h: 1, v: 0 })}
+        />
+      )}
+    </div>
+  ),
 }));
 vi.mock("./ThemeSelector", () => ({
   ThemeSelector: ({
@@ -128,6 +143,45 @@ describe("PresentationEditor", () => {
       [{ id: 7, content: "encrypted-doc", order: 1 }],
       "moon.css"
     );
+  });
+
+  it("opens and closes the fullscreen slideshow overlay", () => {
+    render(
+      <PresentationEditor presentation={mockPresentation} doc="# Hello" primarySlideId={1} />
+    );
+
+    // preview deck only, no slideshow yet
+    expect(
+      screen.getAllByTestId("reveal-deck").map((d) => d.getAttribute("data-mode"))
+    ).toEqual(["preview"]);
+
+    fireEvent.click(screen.getByText("Present"));
+    expect(
+      screen.getAllByTestId("reveal-deck").map((d) => d.getAttribute("data-mode"))
+    ).toEqual(["preview", "slideshow"]);
+
+    fireEvent.click(screen.getByLabelText("Exit slideshow"));
+    expect(
+      screen.getAllByTestId("reveal-deck").map((d) => d.getAttribute("data-mode"))
+    ).toEqual(["preview"]);
+  });
+
+  it("highlights the active slide's markdown when the preview navigates", () => {
+    render(
+      <PresentationEditor
+        presentation={mockPresentation}
+        doc={"# First\n\n---\n\n## Second slide"}
+        primarySlideId={1}
+        editKeyFromUrl={mockEditKey}
+      />
+    );
+
+    // simulate the preview deck reporting slide 2
+    fireEvent.click(screen.getByTestId("goto-second-preview"));
+
+    const mark = document.querySelector("[data-editor-highlight]")!;
+    expect(mark).not.toBeNull();
+    expect(mark.textContent).toBe("## Second slide");
   });
 
   it("rewrites the front-matter theme line when the selector changes", () => {

@@ -84,6 +84,45 @@ const viewSlides = await page.evaluate(
 );
 check("viewer slide count matches presenter", viewSlides === present.slides);
 
+// editor scroll-sync: navigating the preview highlights the active slide's
+// markdown in the left pane and scrolls it into view
+await page.goto(`${BASE}/p/smoketest/e/smokeeditkey/h#${KEY}`);
+await page.waitForSelector("textarea", { timeout: 20000 });
+await page.waitForTimeout(2000);
+const initialHighlight = await page.evaluate(
+  () => document.querySelector("[data-editor-highlight]")?.textContent ?? "",
+);
+check("editor highlights first slide on load", initialHighlight.includes("# Smoke A"));
+await page.click(".reveal .controls .navigate-right");
+await page.waitForTimeout(1200);
+const nextHighlight = await page.evaluate(
+  () => document.querySelector("[data-editor-highlight]")?.textContent ?? "",
+);
+check("navigating preview moves the editor highlight", nextHighlight.includes("## Smoke B"));
+
+// editor slideshow: Present button opens a fullscreen overlay deck over the
+// live document; the ✕ button closes it again
+// exact:true — "text=Present" would substring-match the "Edit Presentation" heading
+await page.getByRole("button", { name: "Present", exact: true }).click();
+await page.waitForTimeout(2500);
+const slideshow = await page.evaluate(() => {
+  const overlay = document.querySelector(".fixed.inset-0 .reveal");
+  return {
+    open: !!overlay,
+    slides: overlay ? overlay.querySelectorAll(".slides > section").length : 0,
+    fullscreen: !!document.fullscreenElement,
+  };
+});
+check("Present opens slideshow overlay", slideshow.open);
+check("slideshow renders all slides", slideshow.slides === present.slides);
+check("slideshow entered browser fullscreen", slideshow.fullscreen);
+await page.click('[aria-label="Exit slideshow"]');
+await page.waitForTimeout(800);
+const slideshowClosed = await page.evaluate(
+  () => !document.querySelector(".fixed.inset-0 .reveal"),
+);
+check("Exit button closes slideshow", slideshowClosed);
+
 // print view lays out pdf pages
 await page.goto(`${BASE}/present/p/smoketest/h?print-pdf#${KEY}`);
 await page.waitForTimeout(4000);

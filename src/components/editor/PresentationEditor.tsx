@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { Textarea } from "@/components/ui/textarea";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -16,7 +15,9 @@ import {
   parseFrontMatter,
   setFrontMatterValue,
   normalizeThemeFile,
+  slideRangeForIndices,
 } from "@/lib/markdown";
+import { MarkdownPane } from "./MarkdownPane";
 import { RevealDeck } from "./RevealDeck";
 import { ShareDialog } from "./ShareDialog";
 import { ThemeSelector } from "./ThemeSelector";
@@ -42,10 +43,41 @@ export function PresentationEditor({
   const [doc, setDoc] = useState(initialDoc);
   const [isSaving, startSaveTransition] = useTransition();
   const [isShareDialogOpen, setShareDialogOpen] = useState(false);
+  const [isPresenting, setPresenting] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [statusType, setStatusType] = useState<"success" | "error" | null>(null);
+  const [activeIndices, setActiveIndices] = useState<{ h: number; v: number } | null>(null);
+  const slideshowRef = useRef<HTMLDivElement | null>(null);
+
+  // The deck reports which slide is showing; map it back to the source range
+  // so the markdown pane can highlight and scroll to it.
+  const highlightRange = useMemo(
+    () => (activeIndices ? slideRangeForIndices(doc, activeIndices.h, activeIndices.v) : null),
+    [doc, activeIndices],
+  );
 
   const hasEditAccess = !!editKeyFromUrl;
+
+  // Slideshow mode: overlay the current document (including unsaved edits) as
+  // a fullscreen deck. requestFullscreen runs in the effect right after the
+  // Present click, still inside the click's transient-activation window;
+  // leaving browser fullscreen (Esc) closes the overlay again.
+  useEffect(() => {
+    if (!isPresenting) return;
+    void slideshowRef.current?.requestFullscreen?.()?.catch(() => {
+      /* fullscreen unavailable (iframe, permissions) — overlay still shows */
+    });
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement) setPresenting(false);
+    };
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+      if (document.fullscreenElement) {
+        void document.exitFullscreen?.()?.catch(() => {});
+      }
+    };
+  }, [isPresenting]);
 
   const selectedTheme = useMemo(() => {
     const fmTheme = parseFrontMatter(doc).config.theme;
@@ -118,6 +150,9 @@ export function PresentationEditor({
               {status}
             </span>
           )}
+          <Button variant="secondary" onClick={() => setPresenting(true)}>
+            Present
+          </Button>
           <Button variant="secondary" onClick={() => setShareDialogOpen(true)}>
             Share
           </Button>
@@ -133,19 +168,22 @@ export function PresentationEditor({
 
       <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-lg border">
         <ResizablePanel defaultSize={45} minSize={20}>
-          <Textarea
+          <MarkdownPane
             value={doc}
-            onChange={(e) => setDoc(e.target.value)}
+            onChange={setDoc}
             disabled={!hasEditAccess}
-            readOnly={!hasEditAccess}
-            spellCheck={false}
-            aria-label="Presentation markdown"
-            className="h-full w-full resize-none rounded-none border-0 font-mono text-sm focus-visible:ring-0"
+            highlight={highlightRange}
+            scrollKey={activeIndices ? `${activeIndices.h}-${activeIndices.v}` : ""}
           />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={55} minSize={20}>
-          <RevealDeck doc={doc} themeFallback={presentation.theme} mode="preview" />
+          <RevealDeck
+            doc={doc}
+            themeFallback={presentation.theme}
+            mode="preview"
+            onSlideChanged={setActiveIndices}
+          />
         </ResizablePanel>
       </ResizablePanelGroup>
 
@@ -155,6 +193,25 @@ export function PresentationEditor({
         publicId={presentation.publicId}
         editKey={editKeyFromUrl}
       />
+
+      {isPresenting && (
+        <div ref={slideshowRef} className="fixed inset-0 z-50 bg-black">
+          <RevealDeck
+            doc={doc}
+            themeFallback={presentation.theme}
+            mode="slideshow"
+            onSlideChanged={setActiveIndices}
+          />
+          <button
+            type="button"
+            aria-label="Exit slideshow"
+            onClick={() => setPresenting(false)}
+            className="absolute right-3 top-3 z-50 rounded bg-black/50 px-2.5 py-1 text-sm text-white opacity-60 transition-opacity hover:opacity-100"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }

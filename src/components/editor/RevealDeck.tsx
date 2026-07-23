@@ -18,12 +18,13 @@ import {
 import { enhanceChartBlocks, mountLiveCharts } from "@/lib/chart-blocks";
 import { runSlideFx } from "@/lib/fx";
 
-export type DeckMode = "preview" | "view" | "present";
+export type DeckMode = "preview" | "view" | "present" | "slideshow";
 
 interface RevealDeckProps {
   doc: string;
   themeFallback?: string | null;
   mode: DeckMode;
+  onSlideChanged?: (indices: { h: number; v: number }) => void;
 }
 
 const PREVIEW_DEBOUNCE_MS = 300;
@@ -34,18 +35,32 @@ function buildRevealConfig(mode: DeckMode, config: DeckConfig, plugins: unknown[
       ? { embedded: true, enableFocus: false }
       : mode === "view"
         ? { embedded: false }
-        : {
-            hash: false,
-            history: false,
-            progress: true,
-            center: true,
-            controls: true,
-            slideNumber: "c",
-            pdfSeparateFragments: true,
-            pdfMaxPagesPerSlide: 1,
-            pdfPageHeightOffset: -1,
-            transition: "slide",
-          };
+        : mode === "slideshow"
+          ? {
+              // In-page fullscreen overlay: embedded so reveal scopes itself to
+              // the overlay div, keyboardCondition null so arrow keys work
+              // without the deck needing focus.
+              embedded: true,
+              keyboardCondition: null,
+              hash: false,
+              progress: true,
+              center: true,
+              controls: true,
+              slideNumber: "c",
+              transition: "slide",
+            }
+          : {
+              hash: false,
+              history: false,
+              progress: true,
+              center: true,
+              controls: true,
+              slideNumber: "c",
+              pdfSeparateFragments: true,
+              pdfMaxPagesPerSlide: 1,
+              pdfPageHeightOffset: -1,
+              transition: "slide",
+            };
 
   const overrides: Record<string, unknown> = {};
   if (config.transition) overrides.transition = config.transition;
@@ -69,13 +84,19 @@ function buildRevealConfig(mode: DeckMode, config: DeckConfig, plugins: unknown[
 // /present presenter+print). React owns only the host div: the reveal.js
 // markdown plugin replaces the template section via outerHTML, so the deck
 // subtree is built imperatively and torn down wholesale on every change.
-export function RevealDeck({ doc, themeFallback, mode }: RevealDeckProps) {
+export function RevealDeck({ doc, themeFallback, mode, onSlideChanged }: RevealDeckProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const deckRef = useRef<Reveal.Api | null>(null);
   const themeLinkRef = useRef<HTMLLinkElement | null>(null);
   const lastIndicesRef = useRef<{ h: number; v: number } | null>(null);
   const printedRef = useRef(false);
   const [isPrint, setIsPrint] = useState(false);
+
+  // Latest callback in a ref so the deck effect never re-runs on identity churn.
+  const onSlideChangedRef = useRef(onSlideChanged);
+  useEffect(() => {
+    onSlideChangedRef.current = onSlideChanged;
+  }, [onSlideChanged]);
 
   useEffect(() => {
     setIsPrint(mode === "present" && /print-pdf/i.test(window.location.search));
@@ -167,6 +188,13 @@ export function RevealDeck({ doc, themeFallback, mode }: RevealDeckProps) {
         deck.slide(h, v);
       }
 
+      const notifySlideChanged = () => {
+        const { h, v } = deck.getIndices();
+        onSlideChangedRef.current?.({ h, v });
+      };
+      deck.on("slidechanged", notifySlideChanged);
+      notifySlideChanged();
+
       const printing = mode === "present" && /print-pdf/i.test(window.location.search);
       const accent =
         config.accent ?? getComputedStyle(host).getPropertyValue("--r-link-color").trim();
@@ -220,9 +248,9 @@ export function RevealDeck({ doc, themeFallback, mode }: RevealDeckProps) {
     };
   }, [markdown, config, mode]);
 
-  // Keep the embedded preview scaled to its pane.
+  // Keep embedded decks (preview pane, slideshow overlay) scaled to their box.
   useEffect(() => {
-    if (mode !== "preview" || typeof ResizeObserver === "undefined") return;
+    if ((mode !== "preview" && mode !== "slideshow") || typeof ResizeObserver === "undefined") return;
     const el = hostRef.current;
     if (!el) return;
     const observer = new ResizeObserver(() => deckRef.current?.layout());

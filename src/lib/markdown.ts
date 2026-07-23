@@ -233,3 +233,42 @@ export function processDoc(doc: string): { config: DeckConfig; markdown: string 
   const { config, body } = parseFrontMatter(doc);
   return { config, markdown: expandContainers(body) };
 }
+
+// Maps reveal slide indices (h = horizontal, v = vertical) back to the
+// character range of that slide's source in the ORIGINAL document, so the
+// editor can highlight and scroll to what the preview is showing. Walks the
+// raw body with the same separator regexes reveal uses (container expansion
+// never adds or removes separator lines, so slide order is identical).
+export function slideRangeForIndices(
+  doc: string,
+  h: number,
+  v: number,
+): { start: number; end: number } | null {
+  const { body } = parseFrontMatter(doc);
+  const bodyOffset = doc.length - body.length;
+  const combined = new RegExp(`${HORIZONTAL_SEPARATOR}|${VERTICAL_SEPARATOR}`, "mg");
+  const horizontal = new RegExp(HORIZONTAL_SEPARATOR);
+
+  const trim = (start: number, end: number) => {
+    while (start < end && (body[start] === "\n" || body[start] === "\r")) start++;
+    while (end > start && (body[end - 1] === "\n" || body[end - 1] === "\r")) end--;
+    return { start: bodyOffset + start, end: bodyOffset + end };
+  };
+
+  let ch = 0;
+  let cv = 0;
+  let segStart = 0;
+  let match: RegExpExecArray | null;
+  while ((match = combined.exec(body))) {
+    if (ch === h && cv === v) return trim(segStart, match.index);
+    if (horizontal.test(match[0])) {
+      ch += 1;
+      cv = 0;
+    } else {
+      cv += 1;
+    }
+    segStart = match.index + match[0].length;
+  }
+  if (ch === h && cv === v) return trim(segStart, body.length);
+  return null;
+}

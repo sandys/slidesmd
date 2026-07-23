@@ -9,6 +9,7 @@ import {
   normalizeThemeFile,
   expandContainers,
   processDoc,
+  slideRangeForIndices,
 } from "./markdown";
 
 describe("separator constants", () => {
@@ -214,5 +215,36 @@ describe("processDoc", () => {
     expect(config.theme).toBe("sky.css");
     expect(markdown).not.toContain("theme:");
     expect(markdown).toContain('<div class="card">');
+  });
+});
+
+describe("slideRangeForIndices", () => {
+  const doc = "---\ntheme: sky.css\n---\n# One\n\n---\n\n## Two A\n\n--\n\n### Two B\n\n---\n\n# Three";
+  const textAt = (h: number, v: number) => {
+    const range = slideRangeForIndices(doc, h, v);
+    return range ? doc.slice(range.start, range.end) : null;
+  };
+
+  it("maps horizontal and vertical indices to source ranges in the original doc", () => {
+    expect(textAt(0, 0)).toBe("# One");
+    expect(textAt(1, 0)).toBe("## Two A");
+    expect(textAt(1, 1)).toBe("### Two B");
+    expect(textAt(2, 0)).toBe("# Three");
+  });
+
+  it("returns null for indices beyond the deck", () => {
+    expect(textAt(3, 0)).toBeNull();
+    expect(textAt(1, 2)).toBeNull();
+  });
+
+  it("works without front matter and with a single slide", () => {
+    const single = slideRangeForIndices("# Only", 0, 0)!;
+    expect("# Only".slice(single.start, single.end)).toBe("# Only");
+  });
+
+  it("handles \\r\\n separators", () => {
+    const crlf = "# A\r\n---\r\n# B";
+    const range = slideRangeForIndices(crlf, 1, 0)!;
+    expect(crlf.slice(range.start, range.end)).toBe("# B");
   });
 });

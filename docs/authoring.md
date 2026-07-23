@@ -226,6 +226,16 @@ export default a + b; // highlighted on the second step
 
 `[287: 2|4]` starts line numbering at 287.
 
+## Presenting
+
+The editor's **Present** button starts a fullscreen slideshow of the current
+document — including unsaved edits. Navigate with the arrow keys (↓ enters
+vertical stacks), press **S** for the speaker-notes window, and **Esc** (or
+the ✕ button) to return to the editor. While you navigate the preview (or the
+slideshow), the markdown pane highlights the active slide's source and scrolls
+it into view, so you always know where to edit. The shareable read-only deck lives at
+`/p/<id>/v#<key>` (press **F** there for fullscreen).
+
 ## PDF export
 
 The editor's **Export to PDF** button opens the presenter with `?print-pdf`,
