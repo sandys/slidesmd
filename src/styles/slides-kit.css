@@ -11,6 +11,13 @@
   --kit-card-bg: color-mix(in srgb, var(--r-main-color) 7%, transparent);
   --kit-card-border: color-mix(in srgb, var(--r-main-color) 14%, transparent);
   --kit-accent: var(--r-link-color);
+  --kit-progress-height: 5px;
+}
+
+/* reveal's stock 3px bar is nearly invisible; the fill color stays on the
+   theme accent (themes set `color` on .progress; the span fills with it). */
+.reveal .progress {
+  height: var(--kit-progress-height);
 }
 
 /* ---- Columns & grids ------------------------------------------------- */
@@ -169,6 +176,72 @@
 
 .reveal .rounded {
   border-radius: var(--kit-radius);
+}
+
+/* ---- Deck chrome: header, footer, slide-number position ---------------- */
+
+.reveal .deck-header,
+.reveal .deck-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  padding: 10px 16px;
+  font-family: var(--r-main-font);
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--r-main-color);
+  opacity: 0.55;
+  text-align: center;
+  pointer-events: none;
+}
+
+.reveal .deck-header {
+  top: 0;
+}
+
+.reveal .deck-footer {
+  bottom: 0;
+}
+
+.reveal .deck-align-left {
+  text-align: left;
+}
+
+.reveal .deck-align-right {
+  text-align: right;
+}
+
+/* slideNumberPosition front-matter key; also applies to print-view numbers */
+.reveal.sn-top-left .slide-number,
+.reveal.sn-top-center .slide-number,
+.reveal.sn-top-right .slide-number {
+  top: 8px;
+  bottom: auto;
+}
+
+.reveal.sn-bottom-left .slide-number,
+.reveal.sn-bottom-center .slide-number {
+  bottom: 8px;
+  top: auto;
+}
+
+.reveal.sn-top-left .slide-number,
+.reveal.sn-bottom-left .slide-number {
+  left: 8px;
+  right: auto;
+}
+
+.reveal.sn-top-center .slide-number,
+.reveal.sn-bottom-center .slide-number {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.reveal.sn-top-right .slide-number {
+  right: 8px;
+  left: auto;
 }
 
 /* ---- Charts ------------------------------------------------------------ */

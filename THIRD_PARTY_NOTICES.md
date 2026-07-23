@@ -13,6 +13,10 @@ License, Copyright (c) 2026 The Bento/Suite authors:
   document model type is replaced by a minimal `ChartLike` shape)
 - `palette.ts` — chart palette derivation ported from bento's `model.ts`
 
+Additionally, `src/lib/fx.ts` ports the count-up and entrance-stagger logic
+from bento's `present.ts` (re-keyed onto CSS classes), and `src/themes/bento.css`
+is styled after bento's starter-deck aesthetic.
+
 Each file retains its original SPDX header. The MIT license text is included
 in bento's repository; the standard MIT terms (use, copy, modify, merge,
 publish, distribute, sublicense, sell — provided the copyright and permission

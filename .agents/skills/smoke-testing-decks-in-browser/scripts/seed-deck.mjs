@@ -29,9 +29,14 @@ if (process.argv.includes("--cleanup")) {
   process.exit(0);
 }
 
-// Exercises: front matter theme, --- separators, Note:, ::: cols layout, chart fence.
+// Exercises: front matter theme, --- separators, Note:, ::: cols layout,
+// chart fence, footer with {{page}}/{{total}} tokens, slide numbers with a
+// custom position, and a per-slide data-header override.
 const DOC = `---
 theme: bento.css
+footer: smoke deck · {{page}}/{{total}}
+slideNumber: c/t
+slideNumberPosition: top-right
 ---
 
 # Smoke A
@@ -39,6 +44,8 @@ theme: bento.css
 Note: speaker note here
 
 ---
+
+<!-- .slide: data-header="Custom header" -->
 
 ## Smoke B
 

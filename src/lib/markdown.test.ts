@@ -76,6 +76,28 @@ describe("parseFrontMatter", () => {
     expect(parseFrontMatter("---\nslideNumber: false\n---\nx").config.slideNumber).toBe(false);
   });
 
+  it("parses chrome keys: progress, header/footer, alignments, number position", () => {
+    const doc = [
+      "---",
+      "progress: false",
+      "header: Q3 Review: Draft",
+      "footer: slidesmd · {{page}}/{{total}}",
+      "headerAlign: left",
+      "footerAlign: diagonal",
+      "slideNumberPosition: top-center",
+      "---",
+      "x",
+    ].join("\n");
+    const { config } = parseFrontMatter(doc);
+    expect(config.progress).toBe(false);
+    expect(config.header).toBe("Q3 Review: Draft"); // value keeps its own colons
+    expect(config.footer).toBe("slidesmd · {{page}}/{{total}}");
+    expect(config.headerAlign).toBe("left");
+    expect(config.footerAlign).toBeUndefined(); // invalid value ignored
+    expect(config.slideNumberPosition).toBe("top-center");
+    expect(parseFrontMatter("---\nslideNumberPosition: sideways\n---\nx").config.slideNumberPosition).toBeUndefined();
+  });
+
   it("handles \\r\\n line endings", () => {
     const doc = "---\r\ntheme: sky.css\r\n---\r\n# Slide";
     const { config, body } = parseFrontMatter(doc);

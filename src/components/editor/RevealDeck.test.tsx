@@ -11,7 +11,9 @@ const deckMock = {
   layout: vi.fn(),
   on: vi.fn(),
   getIndices: vi.fn(() => ({ h: 0, v: 0 })),
-  getCurrentSlide: vi.fn(() => null),
+  getCurrentSlide: vi.fn((): HTMLElement | null => null),
+  getSlidePastCount: vi.fn(() => 0),
+  getTotalSlides: vi.fn(() => 4),
 };
 vi.mock("reveal.js", () => ({
   default: vi.fn(() => deckMock),
@@ -22,6 +24,10 @@ vi.mock("reveal.js/plugin/highlight/highlight.esm.js", () => ({ default: {} }));
 
 beforeEach(() => {
   vi.clearAllMocks();
+  deckMock.getIndices.mockReturnValue({ h: 0, v: 0 });
+  deckMock.getCurrentSlide.mockReturnValue(null);
+  deckMock.getSlidePastCount.mockReturnValue(0);
+  deckMock.getTotalSlides.mockReturnValue(4);
 });
 
 describe("RevealDeck", () => {
@@ -84,16 +90,26 @@ describe("RevealDeck", () => {
     const Reveal = (await import("reveal.js")).default as unknown as ReturnType<typeof vi.fn>;
     render(<RevealDeck doc={"# A"} mode="present" />);
     await waitFor(() => expect(Reveal).toHaveBeenCalled());
-    const config = Reveal.mock.calls[0][1] as { plugins: unknown[]; slideNumber?: string };
+    const config = Reveal.mock.calls[0][1] as {
+      plugins: unknown[];
+      slideNumber?: string;
+      progress?: boolean;
+    };
     expect(config.plugins).toHaveLength(3);
-    expect(config.slideNumber).toBe("c");
+    expect(config.slideNumber).toBe("c/t");
+    expect(config.progress).toBe(true);
     await waitFor(() => expect(deckMock.initialize).toHaveBeenCalled());
   });
 
   it("notifies onSlideChanged on init and on slidechanged events", async () => {
     const onSlideChanged = vi.fn();
+    const Reveal = (await import("reveal.js")).default as unknown as ReturnType<typeof vi.fn>;
     render(<RevealDeck doc={"# A\n---\n# B"} mode="preview" onSlideChanged={onSlideChanged} />);
     await waitFor(() => expect(onSlideChanged).toHaveBeenCalledWith({ h: 0, v: 0 }));
+    // preview shares the visible-by-default chrome: numbers + progress
+    const config = Reveal.mock.calls[0][1] as { slideNumber?: string; progress?: boolean };
+    expect(config.slideNumber).toBe("c/t");
+    expect(config.progress).toBe(true);
 
     const slidechanged = deckMock.on.mock.calls.find(([type]) => type === "slidechanged");
     expect(slidechanged).toBeDefined();
@@ -114,8 +130,50 @@ describe("RevealDeck", () => {
     };
     expect(config.embedded).toBe(true);
     expect(config.keyboardCondition).toBeNull();
-    expect(config.slideNumber).toBe("c");
+    expect(config.slideNumber).toBe("c/t");
     expect(config.controls).toBe(true);
+  });
+
+  it("renders header/footer chrome with tokens and per-slide overrides", async () => {
+    const { container, rerender } = render(
+      <RevealDeck
+        doc={"---\nheader: My Talk\nfooter: Page {{page}} of {{total}}\n---\n# A"}
+        mode="preview"
+      />,
+    );
+    await waitFor(() => expect(deckMock.initialize).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(container.querySelector(".deck-header")?.textContent).toBe("My Talk");
+    });
+    expect(container.querySelector(".deck-footer")?.textContent).toBe("Page 1 of 4");
+
+    // a slide override replaces the header; an empty override hides the footer
+    const section = document.createElement("section");
+    section.setAttribute("data-header", "Custom header");
+    section.setAttribute("data-footer", "");
+    deckMock.getCurrentSlide.mockReturnValue(section);
+    deckMock.getSlidePastCount.mockReturnValue(1);
+    // re-run chrome via the registered slidechanged handlers
+    deckMock.on.mock.calls
+      .filter(([type]) => type === "slidechanged")
+      .forEach(([, handler]) => (handler as () => void)());
+    expect(container.querySelector(".deck-header")?.textContent).toBe("Custom header");
+    expect((container.querySelector(".deck-footer") as HTMLElement).style.display).toBe("none");
+    rerender(<RevealDeck doc="# A" mode="preview" />);
+  });
+
+  it("applies the progress override and slide-number position class", async () => {
+    const Reveal = (await import("reveal.js")).default as unknown as ReturnType<typeof vi.fn>;
+    const { container } = render(
+      <RevealDeck
+        doc={"---\nprogress: false\nslideNumberPosition: top-center\n---\n# A"}
+        mode="present"
+      />,
+    );
+    await waitFor(() => expect(Reveal).toHaveBeenCalled());
+    const config = Reveal.mock.calls[0][1] as { progress: boolean };
+    expect(config.progress).toBe(false);
+    expect(container.querySelector(".reveal")!.className).toContain("sn-top-center");
   });
 
   it("applies front matter reveal overrides", async () => {

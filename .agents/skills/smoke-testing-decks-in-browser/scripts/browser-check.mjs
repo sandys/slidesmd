@@ -75,6 +75,34 @@ check("chart fence rendered to SVG", present.chart && !present.chartLeftover);
 check("speaker notes extracted", present.notes);
 check("front-matter theme loaded", present.theme.includes("bento.css"));
 
+// deck chrome: progress bar, positioned slide numbers, footer tokens,
+// per-slide header override
+const chrome = await page.evaluate(() => ({
+  progressHeight: document.querySelector(".reveal .progress")?.clientHeight ?? 0,
+  slideNumber: document.querySelector(".reveal .slide-number")?.textContent ?? "",
+  positionClass: document.querySelector(".reveal")?.className.includes("sn-top-right") ?? false,
+  footer: document.querySelector(".reveal > .deck-footer")?.textContent ?? "",
+  headerHidden: (document.querySelector(".reveal > .deck-header")?.textContent ?? "") === "",
+}));
+check("progress bar visibly sized (>= 4px)", chrome.progressHeight >= 4);
+check("slide number rendered (c/t)", /1\s*\/\s*\d/.test(chrome.slideNumber));
+check("slide number position class applied", chrome.positionClass);
+check("footer renders {{page}}/{{total}} tokens", /smoke deck · 1\/\d+/.test(chrome.footer));
+check("no header on slide 1 (deck default unset)", chrome.headerHidden);
+
+await page.keyboard.press("ArrowRight");
+await page.waitForTimeout(800);
+const chrome2 = await page.evaluate(() => ({
+  header: document.querySelector(".reveal > .deck-header")?.textContent ?? "",
+  footer: document.querySelector(".reveal > .deck-footer")?.textContent ?? "",
+  progressFill: document.querySelector(".reveal .progress span")?.clientWidth ?? 0,
+}));
+check("per-slide data-header override shows on slide 2", chrome2.header === "Custom header");
+check("footer page token advances", /· 2\/\d+/.test(chrome2.footer));
+check("progress bar fills as the deck advances", chrome2.progressFill > 0);
+await page.keyboard.press("ArrowLeft");
+await page.waitForTimeout(500);
+
 // viewer must agree with the presenter (one slide model everywhere)
 await page.goto(`${BASE}/p/smoketest/v#${KEY}`);
 await page.waitForSelector(".reveal .slides section", { timeout: 20000 });
@@ -93,6 +121,12 @@ const initialHighlight = await page.evaluate(
   () => document.querySelector("[data-editor-highlight]")?.textContent ?? "",
 );
 check("editor highlights first slide on load", initialHighlight.includes("# Smoke A"));
+const previewChrome = await page.evaluate(() => ({
+  footer: document.querySelector(".reveal > .deck-footer")?.textContent ?? "",
+  progressHeight: document.querySelector(".reveal .progress")?.clientHeight ?? 0,
+}));
+check("preview pane shows the footer chrome", previewChrome.footer.includes("smoke deck"));
+check("preview pane progress bar visibly sized", previewChrome.progressHeight >= 4);
 await page.click(".reveal .controls .navigate-right");
 await page.waitForTimeout(1200);
 const nextHighlight = await page.evaluate(

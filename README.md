@@ -130,6 +130,25 @@ highlight. Charts and animation come from `src/vendor/bento/` — MIT code
 vendored from [nyblnet/bento](https://github.com/nyblnet/bento) (see
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
 
+## Credits
+
+slidesmd stands on two projects in particular:
+
+- **[reveal.js](https://revealjs.com)** by Hakim El Hattab (MIT) — the
+  presentation engine every deck renders through.
+- **[bento](https://github.com/nyblnet/bento)** by the Bento/Suite authors
+  (MIT) — the `` ```chart `` engine (charts-lite), the animation engine
+  behind the count-up and entrance effects, and the chart palette derivation
+  are all vendored from bento's source (`src/vendor/bento/`, SPDX headers
+  preserved), and the bundled `bento` theme is an homage to their starter
+  decks' look — Fraunces and Instrument Sans (SIL OFL 1.1), warm paper, one
+  amber accent. Bento explores the opposite philosophy to this project — an
+  entire WYSIWYG slide suite, editor included, in a single self-contained
+  HTML file — and it's brilliant at it. Go check it out.
+
+Editor UI primitives come from [shadcn/ui](https://ui.shadcn.com). The full
+third-party inventory is in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## License
 
 [GPL-3.0](LICENSE). Vendored code and embedded fonts keep their own licenses

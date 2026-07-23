@@ -32,9 +32,9 @@ const PREVIEW_DEBOUNCE_MS = 300;
 function buildRevealConfig(mode: DeckMode, config: DeckConfig, plugins: unknown[]) {
   const base: Record<string, unknown> =
     mode === "preview"
-      ? { embedded: true, enableFocus: false }
+      ? { embedded: true, enableFocus: false, progress: true, slideNumber: "c/t" }
       : mode === "view"
-        ? { embedded: false }
+        ? { embedded: false, progress: true, slideNumber: "c/t" }
         : mode === "slideshow"
           ? {
               // In-page fullscreen overlay: embedded so reveal scopes itself to
@@ -46,7 +46,7 @@ function buildRevealConfig(mode: DeckMode, config: DeckConfig, plugins: unknown[
               progress: true,
               center: true,
               controls: true,
-              slideNumber: "c",
+              slideNumber: "c/t",
               transition: "slide",
             }
           : {
@@ -55,7 +55,7 @@ function buildRevealConfig(mode: DeckMode, config: DeckConfig, plugins: unknown[
               progress: true,
               center: true,
               controls: true,
-              slideNumber: "c",
+              slideNumber: "c/t",
               pdfSeparateFragments: true,
               pdfMaxPagesPerSlide: 1,
               pdfPageHeightOffset: -1,
@@ -63,6 +63,7 @@ function buildRevealConfig(mode: DeckMode, config: DeckConfig, plugins: unknown[
             };
 
   const overrides: Record<string, unknown> = {};
+  if (config.progress !== undefined) overrides.progress = config.progress;
   if (config.transition) overrides.transition = config.transition;
   if (config.transitionSpeed) overrides.transitionSpeed = config.transitionSpeed;
   if (config.backgroundTransition) overrides.backgroundTransition = config.backgroundTransition;
@@ -200,6 +201,47 @@ export function RevealDeck({ doc, themeFallback, mode, onSlideChanged }: RevealD
         config.accent ?? getComputedStyle(host).getPropertyValue("--r-link-color").trim();
       enhanceChartBlocks(host, accent);
 
+      // Deck chrome: header/footer bars. Front matter sets the deck defaults;
+      // a slide overrides them with data-header/data-footer (empty = hidden);
+      // {{page}}, {{total}} and {{date}} tokens are substituted live.
+      const renderChromeText = (text: string, page: number, total: number) =>
+        text
+          .replace(/\{\{page\}\}/g, String(page))
+          .replace(/\{\{total\}\}/g, String(total))
+          .replace(/\{\{date\}\}/g, new Date().toLocaleDateString());
+      const alignClass = (align?: string) =>
+        align === "left" ? " deck-align-left" : align === "right" ? " deck-align-right" : "";
+      const pastCount = () => {
+        const api = deck as unknown as { getSlidePastCount?: () => number };
+        return api.getSlidePastCount?.() ?? deck.getIndices().h;
+      };
+
+      if (!printing) {
+        const headerEl = document.createElement("div");
+        headerEl.className = `deck-header${alignClass(config.headerAlign)}`;
+        const footerEl = document.createElement("div");
+        footerEl.className = `deck-footer${alignClass(config.footerAlign)}`;
+        host.append(headerEl, footerEl);
+        const applyChrome = () => {
+          const slide = deck.getCurrentSlide();
+          const page = pastCount() + 1;
+          const total = deck.getTotalSlides();
+          const entries = [
+            [headerEl, config.header, "data-header"],
+            [footerEl, config.footer, "data-footer"],
+          ] as const;
+          for (const [el, deckDefault, attr] of entries) {
+            const override = slide?.getAttribute(attr);
+            const text = override ?? deckDefault ?? "";
+            const rendered = text ? renderChromeText(text, page, total) : "";
+            el.textContent = rendered;
+            el.style.display = rendered ? "" : "none";
+          }
+        };
+        deck.on("slidechanged", applyChrome);
+        applyChrome();
+      }
+
       if (mode !== "preview" && !printing) {
         const runForCurrentSlide = () => {
           disposeSlideFx?.();
@@ -220,6 +262,28 @@ export function RevealDeck({ doc, themeFallback, mode, onSlideChanged }: RevealD
       if (printing) {
         deck.on("pdf-ready", () => {
           enhanceChartBlocks(host, accent); // print clones fragments — idempotent re-pass
+          // Print lays out every slide at once, so header/footer are injected
+          // per page (fragment clones count as pages for {{page}}/{{total}}).
+          const pages = host.querySelectorAll<HTMLElement>(".pdf-page");
+          pages.forEach((pageEl, index) => {
+            if (pageEl.dataset.chromeDone) return;
+            pageEl.dataset.chromeDone = "true";
+            const section = pageEl.querySelector("section");
+            const entries = [
+              ["deck-header", config.header, "data-header", config.headerAlign],
+              ["deck-footer", config.footer, "data-footer", config.footerAlign],
+            ] as const;
+            for (const [cls, deckDefault, attr, align] of entries) {
+              const override = section?.getAttribute(attr);
+              const text = override ?? deckDefault ?? "";
+              const rendered = text ? renderChromeText(text, index + 1, pages.length) : "";
+              if (!rendered) continue;
+              const el = document.createElement("div");
+              el.className = `${cls}${alignClass(align)}`;
+              el.textContent = rendered;
+              pageEl.appendChild(el);
+            }
+          });
           if (!printedRef.current) {
             printedRef.current = true;
             setTimeout(() => window.print(), 300);
@@ -265,7 +329,12 @@ export function RevealDeck({ doc, themeFallback, mode, onSlideChanged }: RevealD
           If the print dialog didn&apos;t open, press Ctrl/Cmd+P and save as PDF.
         </div>
       )}
-      <div ref={hostRef} className="reveal h-full w-full" />
+      <div
+        ref={hostRef}
+        className={`reveal h-full w-full${
+          config.slideNumberPosition ? ` sn-${config.slideNumberPosition}` : ""
+        }`}
+      />
     </>
   );
 }

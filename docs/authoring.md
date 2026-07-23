@@ -44,7 +44,11 @@ slideNumber: c/t
 | `transition` | `none` `fade` `slide` `convex` `concave` `zoom` | `slide` |
 | `transitionSpeed` | `default` `fast` `slow` | `default` |
 | `backgroundTransition` | same options as `transition` | `fade` |
-| `slideNumber` | `true` `false` `c` `c/t` `h.v` `h/v` | on (presenter) |
+| `slideNumber` | `true` `false` `c` `c/t` `h.v` `h/v` | `c/t` |
+| `slideNumberPosition` | `top-left` `top-center` `top-right` `bottom-left` `bottom-center` `bottom-right` | `bottom-right` |
+| `progress` | `true` / `false` — progress bar along the bottom edge | `true` |
+| `header` / `footer` | text shown on every slide (see below) | none |
+| `headerAlign` / `footerAlign` | `left` `center` `right` | `center` |
 | `width` / `height` | slide design resolution in px | `960` / `700` |
 | `margin` | empty space around slides, `0`–`1` | `0.04` |
 | `center` | `true` / `false` — vertical centering | `true` |
@@ -54,6 +58,37 @@ slideNumber: c/t
 
 Unknown keys are ignored. The theme selector in the editor simply rewrites
 the `theme:` line — the document stays the single source of truth.
+
+## Header, footer, page numbers & progress bar
+
+Deck-wide chrome is set in the front matter; slides can override it:
+
+```markdown
+---
+footer: Q3 All-Hands · {{page}}/{{total}}
+footerAlign: right
+slideNumber: c/t
+slideNumberPosition: top-right
+---
+
+# Title slide
+
+---
+
+<!-- .slide: data-header="Confidential" data-footer="" -->
+## This slide has its own header and hides the deck footer
+```
+
+- `header:` / `footer:` render as thin bars at the top/bottom edge of every
+  slide, in the deck's theme font. Alignment via `headerAlign:` / `footerAlign:`.
+- Per-slide overrides: `data-header="..."` / `data-footer="..."` in a
+  `<!-- .slide: ... -->` comment. An **empty** value (`data-footer=""`) hides
+  the deck-level one for that slide.
+- Tokens `{{page}}`, `{{total}}` and `{{date}}` are substituted live, and
+  per page in PDF export.
+- Page numbers: `slideNumber:` picks the format, `slideNumberPosition:` any of
+  the six corners/edges. The bottom progress bar is on by default; turn it off
+  with `progress: false`.
 
 ## Speaker notes
 

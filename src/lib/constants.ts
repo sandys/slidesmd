@@ -3,6 +3,8 @@
 export const SEED_DOC = `---
 theme: bento.css
 transition: slide
+footer: Made with slidesmd · {{page}}/{{total}}
+slideNumber: c/t
 ---
 
 <span class="kicker">slidesmd</span>
@@ -32,6 +34,8 @@ Slide attributes (backgrounds, transitions) are set with
 \`<!-- .slide: ... -->\` comments.
 
 ---
+
+<!-- .slide: data-header="Per-slide headers work too" -->
 
 ## Layouts
 

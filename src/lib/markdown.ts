@@ -16,6 +16,12 @@ export interface DeckConfig {
   transitionSpeed?: string;
   backgroundTransition?: string;
   slideNumber?: boolean | string;
+  slideNumberPosition?: string;
+  progress?: boolean;
+  header?: string;
+  footer?: string;
+  headerAlign?: string;
+  footerAlign?: string;
   width?: number;
   height?: number;
   margin?: number;
@@ -24,6 +30,15 @@ export interface DeckConfig {
   showNotes?: boolean;
   accent?: string;
 }
+
+export const SLIDE_NUMBER_POSITIONS = [
+  "top-left",
+  "top-center",
+  "top-right",
+  "bottom-left",
+  "bottom-center",
+  "bottom-right",
+] as const;
 
 const FRONT_MATTER_KEY = /^[A-Za-z][\w-]*$/;
 
@@ -69,7 +84,18 @@ function assignConfigValue(config: DeckConfig, key: string, value: string) {
     case "transitionSpeed":
     case "backgroundTransition":
     case "accent":
+    case "header":
+    case "footer":
       if (value) config[key] = value;
+      break;
+    case "headerAlign":
+    case "footerAlign":
+      if (value === "left" || value === "center" || value === "right") config[key] = value;
+      break;
+    case "slideNumberPosition":
+      if ((SLIDE_NUMBER_POSITIONS as readonly string[]).includes(value)) {
+        config.slideNumberPosition = value;
+      }
       break;
     case "width":
     case "height":
@@ -81,6 +107,7 @@ function assignConfigValue(config: DeckConfig, key: string, value: string) {
     case "center":
     case "animateLists":
     case "showNotes":
+    case "progress":
       if (value === "true") config[key] = true;
       else if (value === "false") config[key] = false;
       break;
