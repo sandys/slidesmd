@@ -47,13 +47,14 @@ const eslintConfig = [
   },
   {
     ignores: [
-        ".next/", 
-        "node_modules/", 
-        "drizzle/", 
-        "next.config.ts", 
+        ".next/",
+        "node_modules/",
+        "drizzle/",
+        "next.config.ts",
         "tailwind.config.ts",
         "postcss.config.mjs",
-        "scripts/"
+        "scripts/",
+        "src/vendor/"
     ],
   }
 ];

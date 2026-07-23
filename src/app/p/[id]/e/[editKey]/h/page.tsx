@@ -6,14 +6,13 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface EditPageProps {
-  params: {
+  params: Promise<{
     id: string;
     editKey: string;
-  };
+  }>;
 }
 
 export default async function EditPage({ params: paramsPromise }: EditPageProps) {
-  // eslint-disable-next-line @typescript-eslint/await-thenable
   const params = await paramsPromise;
   const presentation = await getPresentation(params.id);
 
@@ -24,6 +23,7 @@ export default async function EditPage({ params: paramsPromise }: EditPageProps)
   return (
     <DecryptionWrapper
       presentation={presentation}
+      mode="edit"
       editKeyFromUrl={params.editKey}
     />
   );

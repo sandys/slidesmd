@@ -5,6 +5,12 @@ import { vi } from "vitest";
 vi.mock("reveal.js/dist/reveal.css", () => ({
     default: "",
 }));
+vi.mock("reveal.js/plugin/highlight/monokai.css", () => ({
+    default: "",
+}));
+vi.mock("@/styles/slides-kit.css", () => ({
+    default: "",
+}));
 vi.mock("reveal.js/dist/theme/black.css", () => ({
     default: "",
 }));

@@ -1,5 +1,17 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+**slidesmd** is a markdown-first presentation tool built on
+[reveal.js](https://revealjs.com): a deck is one markdown document —
+slides, theme, layouts, charts and animations are all authored as text and
+the slides are generated from it. Content is encrypted in the browser
+(AES-256-GCM); the decryption key lives only in the URL fragment, so the
+server stores ciphertext it can never read.
+
+See **[docs/authoring.md](docs/authoring.md)** for the full authoring
+reference (separators, front matter, `:::` layout containers, ```` ```chart ````
+blocks, fx classes, speaker notes, PDF export). Vendored third-party code and
+fonts are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Getting Started
 
 First, run the development server:

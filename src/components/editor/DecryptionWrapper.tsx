@@ -3,18 +3,27 @@
 
 import { useEffect, useState } from "react";
 import { decrypt, importKey } from "@/lib/crypto";
+import { joinLegacySlides } from "@/lib/markdown";
 import { PresentationEditor } from "./PresentationEditor";
+import { RevealDeck } from "./RevealDeck";
 import type { getPresentation } from "@/app/actions";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
 
+export type DecryptionMode = "edit" | "view" | "present";
+
 interface DecryptionWrapperProps {
   presentation: Presentation;
+  mode: DecryptionMode;
   editKeyFromUrl?: string;
 }
 
-export function DecryptionWrapper({ presentation, editKeyFromUrl }: DecryptionWrapperProps) {
-  const [decryptedSlides, setDecryptedSlides] = useState<Presentation["slides"] | null>(null);
+// The one decrypt gate for every surface. Decrypts all slide rows client-side
+// (the key never leaves the URL fragment) and joins legacy multi-row decks
+// into the single markdown document model; a deck collapses to one row on its
+// next save.
+export function DecryptionWrapper({ presentation, mode, editKeyFromUrl }: DecryptionWrapperProps) {
+  const [doc, setDoc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,19 +36,16 @@ export function DecryptionWrapper({ presentation, editKeyFromUrl }: DecryptionWr
         }
 
         const key = await importKey(keyString);
-        const slides = await Promise.all(
+        const contents = await Promise.all(
           presentation.slides.map(async (slide) => {
             const decryptedContent = await decrypt(slide.content, key);
             if (decryptedContent === null || decryptedContent === undefined || decryptedContent === "") {
               throw new Error(`Failed to decrypt slide #${slide.id}. Content is empty.`);
             }
-            return {
-              ...slide,
-              content: decryptedContent,
-            };
+            return decryptedContent;
           })
         );
-        setDecryptedSlides(slides);
+        setDoc(joinLegacySlides(contents));
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred during decryption.";
         setError(`Failed to decrypt presentation. The key may be invalid or the data corrupted. Details: ${errorMessage}`);
@@ -55,16 +61,24 @@ export function DecryptionWrapper({ presentation, editKeyFromUrl }: DecryptionWr
     return <div className="p-4 text-red-500">{error}</div>;
   }
 
-  if (!decryptedSlides) {
+  if (doc === null) {
     return <div className="p-4">Decrypting...</div>;
   }
 
-  const decryptedPresentation = { ...presentation, slides: decryptedSlides };
+  if (mode === "edit") {
+    return (
+      <PresentationEditor
+        presentation={presentation}
+        doc={doc}
+        primarySlideId={presentation.slides[0]?.id}
+        editKeyFromUrl={editKeyFromUrl}
+      />
+    );
+  }
 
   return (
-    <PresentationEditor
-      presentation={decryptedPresentation}
-      editKeyFromUrl={editKeyFromUrl}
-    />
+    <div className="h-screen w-screen">
+      <RevealDeck doc={doc} themeFallback={presentation.theme} mode={mode} />
+    </div>
   );
 }

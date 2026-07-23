@@ -88,7 +88,9 @@ export async function updatePresentation(
             .set({ theme })
             .where(eq(presentations.id, presentation.id));
 
-        const slideIdsToKeep = newSlides.map((s) => s.id).filter(id => Number.isInteger(id) && id > 0) as number[];
+        const slideIdsToKeep = newSlides
+            .map((s) => s.id)
+            .filter((id): id is number => typeof id === "number" && Number.isInteger(id) && id > 0);
         
         if (slideIdsToKeep.length > 0) {
             await tx

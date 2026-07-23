@@ -48,4 +48,21 @@ describe("generateThemes", () => {
     const themes = JSON.parse(match![1]).sort();
     expect(themes).toEqual(expected);
   });
+
+  it("copies custom src/themes and lists them first", async () => {
+    const customDir = path.join(tmpDir, "src", "themes");
+    await fs.mkdir(customDir, { recursive: true });
+    await fs.writeFile(path.join(customDir, "bento.css"), ":root { --r-main-color: #1e2a3a; }");
+
+    await generateThemes();
+
+    const copied = await fs.readFile(path.join(tmpDir, "public", "themes", "bento.css"), "utf8");
+    expect(copied).toContain("--r-main-color");
+
+    const themesFile = await fs.readFile(path.join(tmpDir, "src", "lib", "themes.ts"), "utf8");
+    const match = themesFile.match(/export const themes = (.+);/s);
+    const themes = JSON.parse(match![1]) as string[];
+    expect(themes[0]).toBe("bento.css");
+    expect(themes).toContain("black.css");
+  });
 });

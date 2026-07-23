@@ -1,16 +1,15 @@
 import { getPresentation } from "@/app/actions";
-import { ViewWrapper } from "@/components/editor/ViewWrapper";
+import { DecryptionWrapper } from "@/components/editor/DecryptionWrapper";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface ViewPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function ViewPage({ params: paramsPromise }: ViewPageProps) {
-  // eslint-disable-next-line @typescript-eslint/await-thenable
   const params = await paramsPromise;
   const presentation = await getPresentation(params.id);
 
@@ -18,6 +17,6 @@ export default async function ViewPage({ params: paramsPromise }: ViewPageProps)
     return notFound();
   }
 
-  return <ViewWrapper presentation={presentation} />;
+  return <DecryptionWrapper presentation={presentation} mode="view" />;
 }
 

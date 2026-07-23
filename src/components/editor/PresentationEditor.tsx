@@ -1,35 +1,45 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
 import { getPresentation, updatePresentation } from "@/app/actions";
-import { SlideEditor } from "./SlideEditor";
 import { encrypt, importKey } from "@/lib/crypto";
+import {
+  parseFrontMatter,
+  setFrontMatterValue,
+  normalizeThemeFile,
+} from "@/lib/markdown";
+import { RevealDeck } from "./RevealDeck";
 import { ShareDialog } from "./ShareDialog";
 import { ThemeSelector } from "./ThemeSelector";
 
 type Presentation = NonNullable<Awaited<ReturnType<typeof getPresentation>>>;
-// This now represents a decrypted slide
-type Slide = {
-    id?: number;
-    content: string;
-    order: number;
-    presentationId: number;
-};
 
 interface PresentationEditorProps {
-  presentation: Omit<Presentation, 'slides'> & { slides: Slide[] };
+  presentation: Presentation;
+  doc: string;
+  primarySlideId?: number;
   editKeyFromUrl?: string;
 }
 
+// Single-document editor: the whole deck is one markdown document (--- splits
+// slides, -- vertical, front matter for deck config), edited in one pane with
+// a live whole-deck preview beside it.
 export function PresentationEditor({
   presentation,
+  doc: initialDoc,
+  primarySlideId,
   editKeyFromUrl,
 }: PresentationEditorProps) {
-  const [slides, setSlides] = useState<Slide[]>(presentation.slides);
-  const [theme, setTheme] = useState(presentation.theme);
+  const [doc, setDoc] = useState(initialDoc);
   const [isSaving, startSaveTransition] = useTransition();
   const [isShareDialogOpen, setShareDialogOpen] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -37,23 +47,15 @@ export function PresentationEditor({
 
   const hasEditAccess = !!editKeyFromUrl;
 
-  const handleSlideChange = (index: number, content: string) => {
-    const newSlides = [...slides];
-    newSlides[index].content = content;
-    setSlides(newSlides);
-  };
+  const selectedTheme = useMemo(() => {
+    const fmTheme = parseFrontMatter(doc).config.theme;
+    return normalizeThemeFile(fmTheme ?? presentation.theme ?? "black.css");
+  }, [doc, presentation.theme]);
 
-  const handleAddSlide = () => {
-    const newSlides = [
-      ...slides,
-      {
-        id: Math.random(), // Temporary ID
-        content: "## New Slide",
-        order: slides.length + 1,
-        presentationId: presentation.id,
-      },
-    ];
-    setSlides(newSlides);
+  // The document is the source of truth for the theme too: the selector is a
+  // convenience that rewrites the front matter's theme: line.
+  const handleThemeChange = (theme: string) => {
+    setDoc((current) => setFrontMatterValue(current, "theme", theme));
   };
 
   const handleSaveChanges = () => {
@@ -67,20 +69,13 @@ export function PresentationEditor({
             return;
         }
         const key = await importKey(keyString);
-
-        const encryptedSlides = await Promise.all(
-            slides.map(async (slide) => ({
-                id: slide.id,
-                order: slide.order,
-                content: await encrypt(slide.content, key),
-            }))
-        );
+        const encryptedDoc = await encrypt(doc, key);
 
         await updatePresentation(
           presentation.publicId,
           editKeyFromUrl,
-          encryptedSlides,
-          theme
+          [{ id: primarySlideId, content: encryptedDoc, order: 1 }],
+          selectedTheme
         );
         setStatus("Presentation saved!");
         setStatusType("success");
@@ -93,21 +88,18 @@ export function PresentationEditor({
     });
   };
 
-  const handlePrint = () => {
-    const key = window.location.hash;
-    // Open a dedicated print page, passing the key in the hash.
-    const printUrl = `/present/p/${presentation.publicId}/h${key}`;
-    window.open(printUrl, '_blank');
+  const handleExportPdf = () => {
+    // ?print-pdf activates reveal's print view; the decryption key stays in
+    // the fragment, which must come after the query string.
+    const printUrl = `/present/p/${presentation.publicId}/h?print-pdf${window.location.hash}`;
+    window.open(printUrl, "_blank");
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="flex h-screen flex-col p-4 gap-4">
       <div className="flex justify-between items-center border-b pb-2">
         <div className="flex items-center gap-2">
           <h2 className="text-2xl font-bold mr-4">Edit Presentation</h2>
-          <Button onClick={handleAddSlide} disabled={!hasEditAccess}>
-            Add New Slide
-          </Button>
           <Button
             onClick={handleSaveChanges}
             disabled={isSaving || !hasEditAccess}
@@ -129,22 +121,34 @@ export function PresentationEditor({
           <Button variant="secondary" onClick={() => setShareDialogOpen(true)}>
             Share
           </Button>
-          <Button variant="outline" onClick={handlePrint}>Export to PDF</Button>
+          <Button variant="outline" onClick={handleExportPdf}>Export to PDF</Button>
         </div>
         <div className="w-48">
-          <ThemeSelector selectedTheme={theme} onThemeChange={setTheme} />
+          <ThemeSelector
+            selectedTheme={selectedTheme}
+            onThemeChange={handleThemeChange}
+          />
         </div>
       </div>
 
-      {slides.map((slide, index) => (
-        <SlideEditor
-          key={slide.id}
-          content={slide.content}
-          onContentChange={(newContent) => handleSlideChange(index, newContent)}
-          theme={theme}
-          editable={hasEditAccess}
-        />
-      ))}
+      <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-lg border">
+        <ResizablePanel defaultSize={45} minSize={20}>
+          <Textarea
+            value={doc}
+            onChange={(e) => setDoc(e.target.value)}
+            disabled={!hasEditAccess}
+            readOnly={!hasEditAccess}
+            spellCheck={false}
+            aria-label="Presentation markdown"
+            className="h-full w-full resize-none rounded-none border-0 font-mono text-sm focus-visible:ring-0"
+          />
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={55} minSize={20}>
+          <RevealDeck doc={doc} themeFallback={presentation.theme} mode="preview" />
+        </ResizablePanel>
+      </ResizablePanelGroup>
+
       <ShareDialog
         isOpen={isShareDialogOpen}
         onClose={() => setShareDialogOpen(false)}

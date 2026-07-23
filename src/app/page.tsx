@@ -4,6 +4,7 @@ import { createPresentation } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { generateNewKeyString, encrypt, importKey } from "@/lib/crypto";
+import { SEED_DOC } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -20,8 +21,7 @@ export default function Home() {
       try {
         const decryptionKey = await generateNewKeyString();
         const key = await importKey(decryptionKey);
-        const initialContent = "# Welcome to your presentation!";
-        const encryptedContent = await encrypt(initialContent, key);
+        const encryptedContent = await encrypt(SEED_DOC, key);
 
         const { publicId, editKey } = await createPresentation(encryptedContent);
 

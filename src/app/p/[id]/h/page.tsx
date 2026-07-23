@@ -6,13 +6,12 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface ViewPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function ViewPage({ params: paramsPromise }: ViewPageProps) {
-  // eslint-disable-next-line @typescript-eslint/await-thenable
   const params = await paramsPromise;
   const presentation = await getPresentation(params.id);
 
@@ -20,5 +19,5 @@ export default async function ViewPage({ params: paramsPromise }: ViewPageProps)
     return <div>Presentation not found</div>;
   }
 
-  return <DecryptionWrapper presentation={presentation} />;
+  return <DecryptionWrapper presentation={presentation} mode="edit" />;
 }
